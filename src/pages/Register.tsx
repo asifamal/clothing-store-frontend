@@ -15,14 +15,14 @@ const Register = () => {
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
           <Link to="/" className="inline-block mb-8">
-            <h1 className="text-3xl font-serif font-bold tracking-tight">NOVĒ</h1>
+            <h1 className="text-3xl font-serif font-bold tracking-tight">NOTED STORE</h1>
           </Link>
           <h2 className="text-2xl font-medium mb-2">Create your account</h2>
           <p className="text-muted-foreground">Join us for exclusive collections</p>
         </div>
 
         <form className="space-y-6">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="firstName">First name</Label>
               <Input

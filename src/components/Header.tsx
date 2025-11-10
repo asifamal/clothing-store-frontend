@@ -22,7 +22,7 @@ const Header = () => {
           </a>
         </nav>
 
-        <h1 className="text-2xl font-serif font-bold tracking-tight">NOTĒD STORĒ</h1>
+  <h1 className="text-2xl font-serif font-bold tracking-tight mx-auto">NOTED STORE</h1>
 
         <div className="flex items-center space-x-4">
           <Button variant="ghost" size="icon">

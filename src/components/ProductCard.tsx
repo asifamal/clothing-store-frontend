@@ -13,7 +13,7 @@ interface ProductCardProps {
 const ProductCard = ({ name, price, image, category, id = "1" }: ProductCardProps) => {
   return (
     <Link to={`/product/${id}`} className="group cursor-pointer block">
-      <div className="relative aspect-[3/4] overflow-hidden rounded-sm bg-muted mb-4">
+      <div className="relative aspect-[4/5] sm:aspect-[3/4] overflow-hidden rounded-sm bg-muted mb-4">
         <img 
           src={image} 
           alt={name}

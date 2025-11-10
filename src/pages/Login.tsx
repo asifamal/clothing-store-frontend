@@ -14,7 +14,7 @@ const Login = () => {
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
           <Link to="/" className="inline-block mb-8">
-            <h1 className="text-3xl font-serif font-bold tracking-tight">NOVĒ</h1>
+            <h1 className="text-3xl font-serif font-bold tracking-tight">NOTED STORE</h1>
           </Link>
           <h2 className="text-2xl font-medium mb-2">Welcome back</h2>
           <p className="text-muted-foreground">Sign in to your account</p>
