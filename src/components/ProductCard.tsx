@@ -1,16 +1,18 @@
 import { Button } from "@/components/ui/button";
 import { ShoppingBag } from "lucide-react";
+import { Link } from "react-router-dom";
 
 interface ProductCardProps {
   name: string;
   price: string;
   image: string;
   category: string;
+  id?: string;
 }
 
-const ProductCard = ({ name, price, image, category }: ProductCardProps) => {
+const ProductCard = ({ name, price, image, category, id = "1" }: ProductCardProps) => {
   return (
-    <div className="group cursor-pointer">
+    <Link to={`/product/${id}`} className="group cursor-pointer block">
       <div className="relative aspect-[3/4] overflow-hidden rounded-sm bg-muted mb-4">
         <img 
           src={image} 
@@ -30,7 +32,7 @@ const ProductCard = ({ name, price, image, category }: ProductCardProps) => {
         <h3 className="font-medium text-foreground">{name}</h3>
         <p className="text-sm text-foreground font-medium">${price}</p>
       </div>
-    </div>
+    </Link>
   );
 };
 
