@@ -1,32 +1,40 @@
+import { useEffect, useState } from "react";
 import ProductCard from "./ProductCard";
+import { getFeaturedProducts } from "@/lib/api";
+
+type Product = {
+  id: number;
+  name: string;
+  price: string;
+  category: { id: number; name: string };
+  image: string | null;
+  stock: number;
+};
+
+const getImageUrl = (imagePath: string | null): string => {
+  if (!imagePath) return "https://images.unsplash.com/photo-1539533018447-63fcce2678e3?w=800&q=80";
+  if (imagePath.startsWith("http")) return imagePath;
+  const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+  return `${baseUrl.replace("/api", "")}${imagePath}`;
+};
 
 const FeaturedProducts = () => {
-  const products = [
-    {
-      name: "Minimalist Wool Coat",
-      price: "285",
-      category: "Outerwear",
-      image: "https://images.unsplash.com/photo-1539533018447-63fcce2678e3?w=800&q=80",
-    },
-    {
-      name: "Organic Cotton Tee",
-      price: "65",
-      category: "Essentials",
-      image: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=800&q=80",
-    },
-    {
-      name: "Tailored Linen Trousers",
-      price: "145",
-      category: "Bottoms",
-      image: "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=800&q=80",
-    },
-    {
-      name: "Cashmere Knit Sweater",
-      price: "195",
-      category: "Knitwear",
-      image: "https://images.unsplash.com/photo-1434389677669-e08b4cac3105?w=800&q=80",
-    },
-  ];
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const response = await getFeaturedProducts(8);
+        setProducts(response.data.products || []);
+      } catch (error) {
+        console.error("Failed to fetch products:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProducts();
+  }, []);
 
   return (
     <section className="py-20 bg-background">
@@ -38,11 +46,28 @@ const FeaturedProducts = () => {
           </p>
         </div>
         
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-          {products.map((product, index) => (
-            <ProductCard key={index} {...product} />
-          ))}
-        </div>
+        {loading ? (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">Loading products...</p>
+          </div>
+        ) : products.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+            {products.map((product) => (
+              <ProductCard
+                key={product.id}
+                id={product.id.toString()}
+                name={product.name}
+                price={product.price}
+                category={product.category.name}
+                image={getImageUrl(product.image)}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">No products available</p>
+          </div>
+        )}
       </div>
     </section>
   );

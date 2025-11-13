@@ -37,7 +37,8 @@ export interface ErrorResponse {
 export async function registerUser(
   username: string,
   email: string,
-  password: string
+  password: string,
+  role: "customer" | "manager" = "customer"
 ): Promise<AuthResponse> {
   const response = await fetch(`${API_BASE_URL}/register/`, {
     method: "POST",
@@ -49,13 +50,68 @@ export async function registerUser(
       username,
       email,
       password,
-      role: "customer",
+      role,
     }),
   });
 
   if (!response.ok) {
     const error: ErrorResponse = await response.json();
     throw new Error(error.message || "Registration failed");
+  }
+
+  return response.json();
+}
+
+/**
+ * Admin user management (manager-only endpoints)
+ */
+export async function adminListUsers(accessToken: string) {
+  const response = await fetch(`${API_BASE_URL}/admin/users/`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ message: 'Failed to fetch users' }));
+    throw new Error(err.message || 'Failed to fetch users');
+  }
+
+  return response.json();
+}
+
+export async function adminUpdateUser(accessToken: string, id: number, body: Record<string, any>) {
+  const response = await fetch(`${API_BASE_URL}/admin/users/${id}/`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ message: 'Failed to update user' }));
+    throw new Error(err.message || 'Failed to update user');
+  }
+
+  return response.json();
+}
+
+export async function adminDeleteUser(accessToken: string, id: number) {
+  const response = await fetch(`${API_BASE_URL}/admin/users/${id}/`, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ message: 'Failed to delete user' }));
+    throw new Error(err.message || 'Failed to delete user');
   }
 
   return response.json();
@@ -282,6 +338,434 @@ export async function checkUsername(
   if (!response.ok) {
     const error: ErrorResponse = await response.json().catch(() => ({ status: 'error', message: 'Failed to check username' } as ErrorResponse));
     throw new Error(error.message || "Username check failed");
+  }
+
+  return response.json();
+}
+
+/**
+ * Admin Dashboard Stats
+ */
+export async function getAdminDashboardStats(accessToken: string) {
+  const response = await fetch(`${API_BASE_URL}/admin/dashboard/stats/`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ message: 'Failed to fetch stats' }));
+    throw new Error(err.message || 'Failed to fetch stats');
+  }
+
+  return response.json();
+}
+
+/**
+ * Admin Orders List with filters
+ */
+export async function getAdminOrders(
+  accessToken: string,
+  status?: string,
+  limit: number = 10,
+  offset: number = 0
+) {
+  const params = new URLSearchParams();
+  if (status && status !== 'all') params.append('status', status);
+  params.append('limit', limit.toString());
+  params.append('offset', offset.toString());
+
+  const response = await fetch(`${API_BASE_URL}/admin/orders/?${params.toString()}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ message: 'Failed to fetch orders' }));
+    throw new Error(err.message || 'Failed to fetch orders');
+  }
+
+  return response.json();
+}
+
+/**
+ * Admin Products List with filters
+ */
+export async function getAdminProducts(
+  accessToken: string,
+  category?: string,
+  search?: string,
+  limit: number = 10,
+  offset: number = 0
+) {
+  const params = new URLSearchParams();
+  if (category && category !== 'all') params.append('category', category);
+  if (search) params.append('search', search);
+  params.append('limit', limit.toString());
+  params.append('offset', offset.toString());
+
+  const response = await fetch(`${API_BASE_URL}/admin/products/?${params.toString()}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ message: 'Failed to fetch products' }));
+    throw new Error(err.message || 'Failed to fetch products');
+  }
+
+  return response.json();
+}
+
+/**
+ * Admin Sales Chart Data
+ */
+export async function getAdminSalesChart(accessToken: string) {
+  const response = await fetch(`${API_BASE_URL}/admin/sales-chart/`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ message: 'Failed to fetch chart data' }));
+    throw new Error(err.message || 'Failed to fetch chart data');
+  }
+
+  return response.json();
+}
+
+/**
+ * Admin Categories CRUD
+ */
+export async function getAdminCategories(accessToken: string) {
+  const response = await fetch(`${API_BASE_URL}/admin/categories/`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ message: 'Failed to fetch categories' }));
+    throw new Error(err.message || 'Failed to fetch categories');
+  }
+
+  return response.json();
+}
+
+export async function getAdminAllCategories(accessToken: string) {
+  const response = await fetch(`${API_BASE_URL}/admin/categories-all/`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ message: 'Failed to fetch categories' }));
+    throw new Error(err.message || 'Failed to fetch categories');
+  }
+
+  return response.json();
+}
+
+export async function createAdminCategory(accessToken: string, name: string, description: string) {
+  const response = await fetch(`${API_BASE_URL}/admin/categories/`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({ name, description }),
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ message: 'Failed to create category' }));
+    throw new Error(err.message || 'Failed to create category');
+  }
+
+  return response.json();
+}
+
+export async function updateAdminCategory(accessToken: string, id: number, name: string, description: string) {
+  const response = await fetch(`${API_BASE_URL}/admin/categories/${id}/`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({ name, description }),
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ message: 'Failed to update category' }));
+    throw new Error(err.message || 'Failed to update category');
+  }
+
+  return response.json();
+}
+
+export async function deleteAdminCategory(accessToken: string, id: number) {
+  const response = await fetch(`${API_BASE_URL}/admin/categories/${id}/`, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ message: 'Failed to delete category' }));
+    throw new Error(err.message || 'Failed to delete category');
+  }
+
+  return response.json();
+}
+
+/**
+ * Admin Products CRUD
+ */
+export async function createAdminProduct(
+  accessToken: string,
+  name: string,
+  description: string,
+  price: number,
+  stock: number,
+  category_id: number | null,
+  image?: File
+) {
+  const formData = new FormData();
+  formData.append('name', name);
+  formData.append('description', description);
+  formData.append('price', price.toString());
+  formData.append('stock', stock.toString());
+  if (category_id) formData.append('category_id', category_id.toString());
+  if (image) formData.append('image', image);
+
+  const response = await fetch(`${API_BASE_URL}/admin/products/create/`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ message: 'Failed to create product' }));
+    throw new Error(err.message || 'Failed to create product');
+  }
+
+  return response.json();
+}
+
+export async function updateAdminProduct(
+  accessToken: string,
+  id: number,
+  updates: Record<string, any>,
+  image?: File
+) {
+  const formData = new FormData();
+  Object.keys(updates).forEach((key) => {
+    formData.append(key, updates[key]);
+  });
+  if (image) formData.append('image', image);
+
+  const response = await fetch(`${API_BASE_URL}/admin/products/${id}/`, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ message: 'Failed to update product' }));
+    throw new Error(err.message || 'Failed to update product');
+  }
+
+  return response.json();
+}
+
+export async function getAdminProductDetail(accessToken: string, id: number) {
+  const response = await fetch(`${API_BASE_URL}/admin/products/${id}/`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ message: 'Failed to fetch product' }));
+    throw new Error(err.message || 'Failed to fetch product');
+  }
+
+  return response.json();
+}
+
+export async function deleteAdminProduct(accessToken: string, id: number) {
+  const response = await fetch(`${API_BASE_URL}/admin/products/${id}/`, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ message: 'Failed to delete product' }));
+    throw new Error(err.message || 'Failed to delete product');
+  }
+
+  return response.json();
+}
+
+/**
+ * Admin Orders Detail
+ */
+export async function getAdminOrderDetail(accessToken: string, id: number) {
+  const response = await fetch(`${API_BASE_URL}/admin/orders/${id}/`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ message: 'Failed to fetch order' }));
+    throw new Error(err.message || 'Failed to fetch order');
+  }
+
+  return response.json();
+}
+
+export async function updateAdminOrder(accessToken: string, id: number, status: string) {
+  const response = await fetch(`${API_BASE_URL}/admin/orders/${id}/`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({ status }),
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ message: 'Failed to update order' }));
+    throw new Error(err.message || 'Failed to update order');
+  }
+
+  return response.json();
+}
+
+/**
+ * Public Products API (no auth required)
+ */
+export async function getPublicProducts(page = 1, limit = 12, categoryId?: number, search?: string) {
+  const params = new URLSearchParams({
+    page: page.toString(),
+    limit: limit.toString(),
+  });
+  
+  if (categoryId) params.append('category_id', categoryId.toString());
+  if (search) params.append('search', search);
+
+  const response = await fetch(`${API_BASE_URL}/products/?${params.toString()}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ message: 'Failed to fetch products' }));
+    throw new Error(err.message || 'Failed to fetch products');
+  }
+
+  return response.json();
+}
+
+export async function getFeaturedProducts(limit = 8) {
+  const response = await fetch(`${API_BASE_URL}/products/featured/?limit=${limit}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ message: 'Failed to fetch featured products' }));
+    throw new Error(err.message || 'Failed to fetch featured products');
+  }
+
+  return response.json();
+}
+
+export async function getPublicCategories() {
+  const response = await fetch(`${API_BASE_URL}/products/categories/`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ message: 'Failed to fetch categories' }));
+    throw new Error(err.message || 'Failed to fetch categories');
+  }
+
+  return response.json();
+}
+
+export async function getPublicProductDetail(productId: number) {
+  const response = await fetch(`${API_BASE_URL}/products/${productId}/`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ message: 'Failed to fetch product details' }));
+    throw new Error(err.message || 'Failed to fetch product details');
+  }
+
+  return response.json();
+}
+
+/**
+ * Admin: Update product variants
+ */
+export async function updateProductVariants(
+  accessToken: string,
+  productId: number,
+  variants: Array<{ size: string; stock: number }>
+) {
+  const response = await fetch(`${API_BASE_URL}/admin/products/${productId}/variants/`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({ variants }),
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ message: 'Failed to update variants' }));
+    throw new Error(err.message || 'Failed to update variants');
   }
 
   return response.json();

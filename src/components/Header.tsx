@@ -1,7 +1,8 @@
-import { ShoppingBag, Menu, Search, User, LogOut } from "lucide-react";
+import { ShoppingBag, Menu, Search, User, LogOut, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,10 +14,21 @@ import {
 const Header = () => {
   const { isAuthenticated, user, logout } = useAuth();
   const navigate = useNavigate();
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const handleLogout = () => {
     logout();
     navigate("/login", { replace: true });
+  };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
+      setSearchOpen(false);
+      setSearchQuery("");
+    }
   };
 
   return (
@@ -27,23 +39,47 @@ const Header = () => {
         </Button>
 
         <nav className="hidden md:flex items-center space-x-8">
+          <Link to="/" className="text-sm font-medium text-foreground hover:text-accent transition-colors">
+            Home
+          </Link>
+          <Link to="/products" className="text-sm font-medium text-foreground hover:text-accent transition-colors">
+            All Products
+          </Link>
           <a href="#" className="text-sm font-medium text-foreground hover:text-accent transition-colors">
             New Arrivals
           </a>
           <a href="#" className="text-sm font-medium text-foreground hover:text-accent transition-colors">
-            Women
-          </a>
-          <a href="#" className="text-sm font-medium text-foreground hover:text-accent transition-colors">
-            Men
+            Categories
           </a>
         </nav>
 
-  <h1 className="text-2xl font-serif font-bold tracking-tight mx-auto">NOTED STORE</h1>
+        <Link to="/" className="text-2xl font-serif font-bold tracking-tight mx-auto">
+          NOTED STORE
+        </Link>
 
         <div className="flex items-center space-x-4">
-          <Button variant="ghost" size="icon">
-            <Search className="h-5 w-5" />
-          </Button>
+          {searchOpen ? (
+            <form onSubmit={handleSearch} className="flex items-center gap-2">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search products..."
+                className="w-48 px-3 py-1 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-accent"
+                autoFocus
+              />
+              <Button type="submit" variant="ghost" size="icon">
+                <Search className="h-5 w-5" />
+              </Button>
+              <Button type="button" variant="ghost" size="icon" onClick={() => setSearchOpen(false)}>
+                <X className="h-5 w-5" />
+              </Button>
+            </form>
+          ) : (
+            <Button variant="ghost" size="icon" onClick={() => setSearchOpen(true)}>
+              <Search className="h-5 w-5" />
+            </Button>
+          )}
           
           {isAuthenticated && user ? (
             <DropdownMenu>
