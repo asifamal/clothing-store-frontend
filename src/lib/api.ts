@@ -906,3 +906,229 @@ export async function deleteCategoryAttribute(accessToken: string, categoryId: n
 
   return response.json();
 }
+
+// User Profile API Functions
+
+/**
+ * Get user profile
+ */
+export async function getUserProfile(accessToken: string) {
+  const response = await fetch(`${API_BASE_URL}/profile/`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ message: 'Failed to fetch profile' }));
+    throw new Error(err.message || 'Failed to fetch profile');
+  }
+
+  return response.json();
+}
+
+/**
+ * Update user profile
+ */
+export async function updateUserProfile(
+  accessToken: string,
+  profileData: {
+    first_name?: string;
+    last_name?: string;
+    date_of_birth?: string;
+    phone_number?: string;
+    bio?: string;
+  },
+  avatar?: File
+) {
+  // Use FormData if avatar is provided, otherwise JSON
+  if (avatar) {
+    const formData = new FormData();
+    Object.entries(profileData).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        formData.append(key, value);
+      }
+    });
+    formData.append('avatar', avatar);
+
+    const response = await fetch(`${API_BASE_URL}/profile/`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({ message: 'Failed to update profile' }));
+      throw new Error(err.message || 'Failed to update profile');
+    }
+
+    return response.json();
+  } else {
+    const response = await fetch(`${API_BASE_URL}/profile/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify(profileData),
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({ message: 'Failed to update profile' }));
+      throw new Error(err.message || 'Failed to update profile');
+    }
+
+    return response.json();
+  }
+}
+
+/**
+ * Get user addresses
+ */
+export async function getUserAddresses(accessToken: string) {
+  const response = await fetch(`${API_BASE_URL}/addresses/`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ message: 'Failed to fetch addresses' }));
+    throw new Error(err.message || 'Failed to fetch addresses');
+  }
+
+  return response.json();
+}
+
+/**
+ * Create new address
+ */
+export async function createUserAddress(
+  accessToken: string,
+  addressData: {
+    address_type: 'home' | 'work' | 'billing' | 'shipping' | 'other';
+    street_address: string;
+    apartment_number?: string;
+    city: string;
+    state: string;
+    zip_code: string;
+    country?: string;
+    is_default?: boolean;
+  }
+) {
+  const response = await fetch(`${API_BASE_URL}/addresses/`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify(addressData),
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ message: 'Failed to create address' }));
+    throw new Error(err.message || 'Failed to create address');
+  }
+
+  return response.json();
+}
+
+/**
+ * Get specific address
+ */
+export async function getUserAddress(accessToken: string, addressId: number) {
+  const response = await fetch(`${API_BASE_URL}/addresses/${addressId}/`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ message: 'Failed to fetch address' }));
+    throw new Error(err.message || 'Failed to fetch address');
+  }
+
+  return response.json();
+}
+
+/**
+ * Update address
+ */
+export async function updateUserAddress(
+  accessToken: string,
+  addressId: number,
+  addressData: Partial<{
+    address_type: 'home' | 'work' | 'billing' | 'shipping' | 'other';
+    street_address: string;
+    apartment_number: string;
+    city: string;
+    state: string;
+    zip_code: string;
+    country: string;
+    is_default: boolean;
+  }>
+) {
+  const response = await fetch(`${API_BASE_URL}/addresses/${addressId}/`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify(addressData),
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ message: 'Failed to update address' }));
+    throw new Error(err.message || 'Failed to update address');
+  }
+
+  return response.json();
+}
+
+/**
+ * Delete address
+ */
+export async function deleteUserAddress(accessToken: string, addressId: number) {
+  const response = await fetch(`${API_BASE_URL}/addresses/${addressId}/`, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ message: 'Failed to delete address' }));
+    throw new Error(err.message || 'Failed to delete address');
+  }
+
+  return response.json();
+}
+
+/**
+ * Set default address
+ */
+export async function setDefaultAddress(accessToken: string, addressId: number) {
+  const response = await fetch(`${API_BASE_URL}/addresses/${addressId}/set-default/`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ message: 'Failed to set default address' }));
+    throw new Error(err.message || 'Failed to set default address');
+  }
+
+  return response.json();
+}
