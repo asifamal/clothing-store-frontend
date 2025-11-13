@@ -545,7 +545,8 @@ export async function createAdminProduct(
   price: number,
   stock: number,
   category_id: number | null,
-  image?: File
+  image?: File,
+  attributes?: Record<number, string>
 ) {
   const formData = new FormData();
   formData.append('name', name);
@@ -554,6 +555,23 @@ export async function createAdminProduct(
   formData.append('stock', stock.toString());
   if (category_id) formData.append('category_id', category_id.toString());
   if (image) formData.append('image', image);
+  
+  // Add attributes with attr_ prefix
+  if (attributes) {
+    console.log('=== DEBUG: createAdminProduct API ===');
+    console.log('Attributes received:', attributes);
+    Object.entries(attributes).forEach(([attrId, value]) => {
+      console.log(`Processing attribute ${attrId}: "${value}" (trimmed: "${value.trim()}")`);
+      if (value.trim()) {
+        formData.append(`attr_${attrId}`, value);
+        console.log(`✓ Added attr_${attrId} = "${value}"`);
+      } else {
+        console.log(`✗ Skipped empty attribute ${attrId}`);
+      }
+    });
+  } else {
+    console.log('No attributes provided to API');
+  }
 
   const response = await fetch(`${API_BASE_URL}/admin/products/create/`, {
     method: "POST",
@@ -575,13 +593,23 @@ export async function updateAdminProduct(
   accessToken: string,
   id: number,
   updates: Record<string, any>,
-  image?: File
+  image?: File,
+  attributes?: Record<number, string>
 ) {
   const formData = new FormData();
   Object.keys(updates).forEach((key) => {
     formData.append(key, updates[key]);
   });
   if (image) formData.append('image', image);
+  
+  // Add attributes with attr_ prefix
+  if (attributes) {
+    Object.entries(attributes).forEach(([attrId, value]) => {
+      if (value.trim()) {
+        formData.append(`attr_${attrId}`, value);
+      }
+    });
+  }
 
   const response = await fetch(`${API_BASE_URL}/admin/products/${id}/`, {
     method: "PUT",
@@ -674,7 +702,15 @@ export async function updateAdminOrder(accessToken: string, id: number, status: 
 /**
  * Public Products API (no auth required)
  */
-export async function getPublicProducts(page = 1, limit = 12, categoryId?: number, search?: string) {
+export async function getPublicProducts(
+  page = 1, 
+  limit = 12, 
+  categoryId?: number, 
+  search?: string, 
+  attributeFilters?: Record<number, string>,
+  minPrice?: string,
+  maxPrice?: string
+) {
   const params = new URLSearchParams({
     page: page.toString(),
     limit: limit.toString(),
@@ -682,6 +718,17 @@ export async function getPublicProducts(page = 1, limit = 12, categoryId?: numbe
   
   if (categoryId) params.append('category_id', categoryId.toString());
   if (search) params.append('search', search);
+  if (minPrice && minPrice.trim()) params.append('min_price', minPrice.trim());
+  if (maxPrice && maxPrice.trim()) params.append('max_price', maxPrice.trim());
+  
+  // Add attribute filters (e.g., attr_1=Long Sleeve&attr_2=Cotton)
+  if (attributeFilters) {
+    Object.entries(attributeFilters).forEach(([attrId, value]) => {
+      if (value.trim()) {
+        params.append(`attr_${attrId}`, value);
+      }
+    });
+  }
 
   const response = await fetch(`${API_BASE_URL}/products/?${params.toString()}`, {
     method: "GET",
@@ -730,6 +777,25 @@ export async function getPublicCategories() {
   return response.json();
 }
 
+/**
+ * Public: Get category attributes for filtering
+ */
+export async function getPublicCategoryAttributes(categoryId: number) {
+  const response = await fetch(`${API_BASE_URL}/products/categories/${categoryId}/attributes/`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ message: 'Failed to fetch category attributes' }));
+    throw new Error(err.message || 'Failed to fetch category attributes');
+  }
+
+  return response.json();
+}
+
 export async function getPublicProductDetail(productId: number) {
   const response = await fetch(`${API_BASE_URL}/products/${productId}/`, {
     method: "GET",
@@ -766,6 +832,76 @@ export async function updateProductVariants(
   if (!response.ok) {
     const err = await response.json().catch(() => ({ message: 'Failed to update variants' }));
     throw new Error(err.message || 'Failed to update variants');
+  }
+
+  return response.json();
+}
+
+/**
+ * Admin: Get category attributes
+ */
+export async function getCategoryAttributes(accessToken: string, categoryId: number) {
+  const response = await fetch(`${API_BASE_URL}/admin/categories/${categoryId}/attributes/`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${accessToken}`,
+    },
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ message: 'Failed to fetch category attributes' }));
+    throw new Error(err.message || 'Failed to fetch category attributes');
+  }
+
+  return response.json();
+}
+
+/**
+ * Admin: Create category attribute
+ */
+export async function createCategoryAttribute(
+  accessToken: string, 
+  categoryId: number, 
+  data: {
+    name: string;
+    field_type: 'text' | 'number' | 'select';
+    is_required: boolean;
+    options?: string[];
+  }
+) {
+  const response = await fetch(`${API_BASE_URL}/admin/categories/${categoryId}/attributes/`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ message: 'Failed to create category attribute' }));
+    throw new Error(err.message || 'Failed to create category attribute');
+  }
+
+  return response.json();
+}
+
+/**
+ * Admin: Delete category attribute
+ */
+export async function deleteCategoryAttribute(accessToken: string, categoryId: number, attributeId: number) {
+  const response = await fetch(`${API_BASE_URL}/admin/categories/${categoryId}/attributes/${attributeId}/delete/`, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${accessToken}`,
+    },
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ message: 'Failed to delete category attribute' }));
+    throw new Error(err.message || 'Failed to delete category attribute');
   }
 
   return response.json();

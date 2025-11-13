@@ -17,6 +17,7 @@ type ProductData = {
   category: { id: number; name: string } | null;
   image: string | null;
   variants: Array<{ id: number; size: string; stock: number }>;
+  attributes: Array<{ name: string; value: string }>;
   created_at: string;
   updated_at: string;
 };
@@ -245,6 +246,12 @@ const Product = () => {
                   <span className="mr-2">•</span>
                   <span>Price: ${product.price}</span>
                 </li>
+                {product.attributes && product.attributes.length > 0 && product.attributes.map((attr, index) => (
+                  <li key={index} className="flex items-start">
+                    <span className="mr-2">•</span>
+                    <span>{attr.name}: {attr.value}</span>
+                  </li>
+                ))}
               </ul>
             </div>
           </div>

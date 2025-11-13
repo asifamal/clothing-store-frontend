@@ -1,18 +1,28 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { getAdminCategories, createAdminCategory, updateAdminCategory, deleteAdminCategory } from "@/lib/api";
+import { getAdminCategories, createAdminCategory, updateAdminCategory, deleteAdminCategory, getCategoryAttributes, createCategoryAttribute, deleteCategoryAttribute } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Plus, Edit2, Trash2 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Plus, Edit2, Trash2, Settings, X } from "lucide-react";
 
 type Category = {
   id: number;
   name: string;
   description: string;
   created_at: string;
+};
+
+type CategoryAttribute = {
+  id: number;
+  name: string;
+  field_type: 'text' | 'number' | 'select';
+  is_required: boolean;
+  options?: { id: number; value: string; }[];
 };
 
 const AdminCategories = () => {
@@ -27,6 +37,18 @@ const AdminCategories = () => {
   const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [form, setForm] = useState({ name: "", description: "" });
+
+  // Attributes management state
+  const [showAttributesModal, setShowAttributesModal] = useState(false);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
+  const [selectedCategoryName, setSelectedCategoryName] = useState("");
+  const [attributes, setAttributes] = useState<CategoryAttribute[]>([]);
+  const [attributeForm, setAttributeForm] = useState({
+    name: "",
+    field_type: "text" as "text" | "number" | "select",
+    is_required: false,
+    options: "" // For select type, comma-separated values
+  });
 
   const fetchCategories = async () => {
     setLoading(true);
@@ -95,6 +117,79 @@ const AdminCategories = () => {
     setShowModal(false);
   };
 
+  // Attributes management functions
+  const openAttributesModal = async (category: Category) => {
+    setSelectedCategoryId(category.id);
+    setSelectedCategoryName(category.name);
+    setShowAttributesModal(true);
+    try {
+      const res = await getCategoryAttributes(access, category.id);
+      setAttributes(res.data?.attributes || []);
+    } catch (e) {
+      toast({ variant: "destructive", title: "Error", description: "Failed to load attributes" });
+      setAttributes([]);
+    }
+  };
+
+  const handleSaveAttribute = async () => {
+    if (!attributeForm.name.trim() || !selectedCategoryId) {
+      toast({ variant: "destructive", title: "Error", description: "Attribute name is required" });
+      return;
+    }
+
+    try {
+      const options = attributeForm.field_type === 'select' && attributeForm.options.trim()
+        ? attributeForm.options
+            .split(/[,\n]/) // Split by comma or newline
+            .map(opt => opt.trim())
+            .filter(opt => opt.length > 0)
+        : [];
+
+      if (attributeForm.field_type === 'select' && options.length === 0) {
+        toast({ variant: "destructive", title: "Error", description: "Please provide at least one option for dropdown fields" });
+        return;
+      }
+
+      await createCategoryAttribute(access, selectedCategoryId, {
+        name: attributeForm.name,
+        field_type: attributeForm.field_type,
+        is_required: attributeForm.is_required,
+        options
+      });
+
+      toast({ title: "Success", description: "Attribute added successfully" });
+      setAttributeForm({ name: "", field_type: "text", is_required: false, options: "" });
+      
+      // Refresh attributes
+      const res = await getCategoryAttributes(access, selectedCategoryId);
+      setAttributes(res.data?.attributes || []);
+    } catch (e) {
+      toast({ variant: "destructive", title: "Error", description: (e as Error).message });
+    }
+  };
+
+  const handleDeleteAttribute = async (attributeId: number) => {
+    if (!selectedCategoryId) return;
+    try {
+      await deleteCategoryAttribute(access, selectedCategoryId, attributeId);
+      toast({ title: "Success", description: "Attribute deleted" });
+      
+      // Refresh attributes
+      const res = await getCategoryAttributes(access, selectedCategoryId);
+      setAttributes(res.data?.attributes || []);
+    } catch (e) {
+      toast({ variant: "destructive", title: "Error", description: (e as Error).message });
+    }
+  };
+
+  const resetAttributesModal = () => {
+    setShowAttributesModal(false);
+    setSelectedCategoryId(null);
+    setSelectedCategoryName("");
+    setAttributes([]);
+    setAttributeForm({ name: "", field_type: "text", is_required: false, options: "" });
+  };
+
   return (
     <div className="p-4 md:p-8">
       <div className="max-w-6xl mx-auto">
@@ -154,6 +249,15 @@ const AdminCategories = () => {
                         >
                           <Edit2 className="w-4 h-4" />
                           Edit
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => openAttributesModal(cat)}
+                          className="flex items-center gap-1"
+                        >
+                          <Settings className="w-4 h-4" />
+                          Attributes
                         </Button>
                         <Button
                           size="sm"
@@ -242,6 +346,173 @@ const AdminCategories = () => {
               disabled={deleteLoading}
             >
               {deleteLoading ? "Deleting..." : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Category Attributes Modal */}
+      <Dialog open={showAttributesModal} onOpenChange={(open) => { if (!open) resetAttributesModal(); }}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Manage Attributes - {selectedCategoryName}</DialogTitle>
+            <DialogDescription>
+              Define custom attributes that products in this category can have (e.g., "Sleeve Length" for shirts, "Fit Type" for pants).
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-6">
+            {/* Add New Attribute Form */}
+            <div className="bg-gray-50 p-4 rounded-lg border">
+              <h3 className="text-lg font-medium mb-4">Add New Attribute</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="attr-name">Attribute Name *</Label>
+                  <Input
+                    id="attr-name"
+                    value={attributeForm.name}
+                    onChange={(e) => setAttributeForm({ ...attributeForm, name: e.target.value })}
+                    placeholder="e.g., Sleeve Length, Size, Material"
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="attr-type">Field Type *</Label>
+                  <Select 
+                    value={attributeForm.field_type} 
+                    onValueChange={(value: "text" | "number" | "select") => 
+                      setAttributeForm({ ...attributeForm, field_type: value, options: value !== 'select' ? '' : attributeForm.options })
+                    }
+                  >
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Select field type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="text">Text (Free input - e.g., Brand, Material)</SelectItem>
+                      <SelectItem value="number">Number (Range filtering - e.g., Price, Size)</SelectItem>
+                      <SelectItem value="select">Dropdown (Pre-defined options - e.g., Colors, Sizes)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              
+              {attributeForm.field_type === 'select' && (
+                <div className="mt-4">
+                  <Label htmlFor="attr-options">Options *</Label>
+                  <p className="text-sm text-gray-600 mb-2">
+                    Add options one by one. Example: "Small", "Medium", "Large" or "Short Sleeve", "Long Sleeve", "Sleeveless"
+                  </p>
+                  <Textarea
+                    id="attr-options"
+                    value={attributeForm.options}
+                    onChange={(e) => setAttributeForm({ ...attributeForm, options: e.target.value })}
+                    placeholder="Enter each option on a new line or separate with commas:\n\nShort Sleeve\nLong Sleeve\nSleeveless\n\nOR\n\nShort Sleeve, Long Sleeve, Sleeveless"
+                    className="mt-1"
+                    rows={4}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    💡 Tip: You can enter options separated by commas or each on a new line
+                  </p>
+                </div>
+              )}
+              
+              {attributeForm.field_type === 'number' && (
+                <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                  <p className="text-sm text-blue-800">
+                    📊 <strong>Number fields</strong> allow customers to filter by ranges (e.g., "Price: $10-$50" or "Size: 6-12").
+                    Products will be filterable by minimum and maximum values.
+                  </p>
+                </div>
+              )}
+              
+              {attributeForm.field_type === 'text' && (
+                <div className="mt-4 p-3 bg-green-50 rounded-lg">
+                  <p className="text-sm text-green-800">
+                    ✏️ <strong>Text fields</strong> allow customers to search by typing (e.g., "Material: Cotton" or "Brand: Nike").
+                    Good for open-ended attributes with many possible values.
+                  </p>
+                </div>
+              )}
+              
+              <div className="flex items-center space-x-2 mt-4">
+                <input
+                  type="checkbox"
+                  id="attr-required"
+                  checked={attributeForm.is_required}
+                  onChange={(e) => setAttributeForm({ ...attributeForm, is_required: e.target.checked })}
+                  className="rounded"
+                />
+                <Label htmlFor="attr-required">Required field (customers must specify this when viewing products)</Label>
+              </div>
+              
+              <div className="flex justify-end mt-4">
+                <Button onClick={handleSaveAttribute} className="bg-blue-600 hover:bg-blue-700">
+                  Add Attribute
+                </Button>
+              </div>
+            </div>
+
+            {/* Existing Attributes */}
+            <div>
+              <h3 className="text-lg font-medium mb-4">Existing Attributes ({attributes?.length || 0})</h3>
+              {!attributes || attributes.length === 0 ? (
+                <p className="text-gray-500 text-center py-8">No attributes defined for this category yet.</p>
+              ) : (
+                <div className="grid gap-3">
+                  {attributes.map((attr) => (
+                    <div key={attr.id} className="flex items-start justify-between p-4 bg-white border rounded-lg">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="font-medium text-lg">{attr.name}</span>
+                          <span className={`text-xs px-2 py-1 rounded-full ${
+                            attr.field_type === 'text' ? 'bg-blue-100 text-blue-800' :
+                            attr.field_type === 'number' ? 'bg-green-100 text-green-800' :
+                            'bg-purple-100 text-purple-800'
+                          }`}>
+                            {attr.field_type === 'select' ? '📋 Dropdown' : 
+                             attr.field_type === 'number' ? '🔢 Number Range' : 
+                             '✏️ Text Input'}
+                          </span>
+                          {attr.is_required && (
+                            <span className="text-xs px-2 py-1 bg-red-100 text-red-800 rounded-full">
+                              ⚠️ Required
+                            </span>
+                          )}
+                        </div>
+                        {attr.field_type === 'select' && attr.options && attr.options.length > 0 && (
+                          <div className="text-sm text-gray-600">
+                            <strong>Options:</strong> {attr.options.map(opt => opt.value).join(' • ')}
+                          </div>
+                        )}
+                        {attr.field_type === 'number' && (
+                          <div className="text-sm text-gray-600">
+                            <strong>Type:</strong> Customers can filter by number ranges (e.g., 10-50)
+                          </div>
+                        )}
+                        {attr.field_type === 'text' && (
+                          <div className="text-sm text-gray-600">
+                            <strong>Type:</strong> Customers can search by typing text
+                          </div>
+                        )}
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => handleDeleteAttribute(attr.id)}
+                        className="ml-4"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="ghost" onClick={resetAttributesModal}>
+              Close
             </Button>
           </DialogFooter>
         </DialogContent>

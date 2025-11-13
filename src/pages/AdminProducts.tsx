@@ -8,6 +8,7 @@ import {
   deleteAdminProduct,
   getAdminCategories,
   updateProductVariants,
+  getCategoryAttributes,
 } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -51,6 +52,8 @@ const AdminProducts = () => {
   const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [variants, setVariants] = useState<Array<{ size: string; stock: number }>>([]);
+  const [categoryAttributes, setCategoryAttributes] = useState<Array<{ id: number; name: string; field_type: string; is_required: boolean; options: Array<{ id: number; value: string }> }>>([]);
+  const [productAttributes, setProductAttributes] = useState<Record<number, string>>({});
   const [form, setForm] = useState({
     name: "",
     description: "",
@@ -61,6 +64,21 @@ const AdminProducts = () => {
   });
 
   const AVAILABLE_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+
+  const fetchCategoryAttributes = async (categoryId: string) => {
+    if (!categoryId) {
+      setCategoryAttributes([]);
+      return;
+    }
+    try {
+      const response = await getCategoryAttributes(access, parseInt(categoryId));
+      setCategoryAttributes(response.data.attributes || []);
+    } catch (error) {
+      console.error('Failed to fetch category attributes:', error);
+      setCategoryAttributes([]);
+    }
+  };
+
   const fetchData = async () => {
     setLoading(true);
     try {
@@ -118,6 +136,11 @@ const AdminProducts = () => {
     try {
       let productId = editingId;
       
+      console.log('=== DEBUG: Form submission ===');
+      console.log('Category ID:', form.category_id);
+      console.log('Product attributes state:', productAttributes);
+      console.log('Category attributes available:', categoryAttributes);
+      
       if (editingId) {
         await updateAdminProduct(
           access,
@@ -129,7 +152,8 @@ const AdminProducts = () => {
             stock: parseInt(form.stock),
             category_id: form.category_id ? parseInt(form.category_id) : null,
           },
-          form.image || undefined
+          form.image || undefined,
+          productAttributes
         );
         toast({ title: "Success", description: "Product updated" });
       } else {
@@ -140,7 +164,8 @@ const AdminProducts = () => {
           parseFloat(form.price),
           parseInt(form.stock),
           form.category_id ? parseInt(form.category_id) : null,
-          form.image || undefined
+          form.image || undefined,
+          productAttributes
         );
         productId = result.data.id;
         toast({ title: "Success", description: "Product created" });
@@ -175,6 +200,20 @@ const AdminProducts = () => {
       if (data.variants && Array.isArray(data.variants)) {
         setVariants(data.variants.map((v: any) => ({ size: v.size, stock: v.stock })));
       }
+      // Load attributes if they exist
+      const attributeMap: Record<number, string> = {};
+      if (data.attributes && Array.isArray(data.attributes)) {
+        data.attributes.forEach((attr: any) => {
+          attributeMap[attr.id] = attr.value;
+        });
+      }
+      setProductAttributes(attributeMap);
+      
+      // Load category attributes
+      if (data.category_id) {
+        await fetchCategoryAttributes(data.category_id.toString());
+      }
+      
       setEditingId(prod.id);
       setShowModal(true);
     } catch (e) {
@@ -198,6 +237,8 @@ const AdminProducts = () => {
     setForm({ name: "", description: "", price: "", stock: "", category_id: "", image: null });
     setImagePreview(null);
     setVariants([]);
+    setCategoryAttributes([]);
+    setProductAttributes({});
     setEditingId(null);
     setShowModal(false);
   };
@@ -329,7 +370,20 @@ const AdminProducts = () => {
               <Label>Category</Label>
               <select
                 value={form.category_id}
-                onChange={(e) => setForm({ ...form, category_id: e.target.value })}
+                onChange={(e) => {
+                  const categoryId = e.target.value;
+                  const previousCategoryId = form.category_id;
+                  
+                  setForm({ ...form, category_id: categoryId });
+                  
+                  // Only clear attributes if switching to a different category
+                  // This preserves user input when switching back to the same category
+                  if (categoryId !== previousCategoryId) {
+                    setProductAttributes({});
+                  }
+                  
+                  fetchCategoryAttributes(categoryId);
+                }}
                 className="mt-1 w-full border border-gray-300 rounded px-3 py-2 text-sm"
               >
                 <option value="">Select a category</option>
@@ -340,6 +394,128 @@ const AdminProducts = () => {
                 ))}
               </select>
             </div>
+
+            {/* Category Attributes */}
+            {form.category_id && (
+              <div className="border-t pt-4">
+                <div className="mb-4">
+                  <Label className="text-base font-semibold mb-2 block">Product Attributes</Label>
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
+                    <p className="text-sm text-blue-800 font-medium mb-1">How Dynamic Attributes Work:</p>
+                    <ul className="text-xs text-blue-700 space-y-1">
+                      <li>• <strong>Select:</strong> Choose from predefined options (dropdown on website)</li>
+                      <li>• <strong>Number:</strong> Enter numeric values (enables range filtering: 10-50, 20-100)</li>
+                      <li>• <strong>Text:</strong> Enter descriptive text (enables search filtering)</li>
+                      <li>• These attributes become filters that customers can use to find products</li>
+                    </ul>
+                  </div>
+                </div>
+                {categoryAttributes.length > 0 ? (
+                  <div className="space-y-4">
+                    {categoryAttributes.map((attr) => (
+                      <div key={attr.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Label className="text-sm font-medium text-gray-900">
+                            {attr.name} 
+                            {attr.is_required && <span className="text-red-500 ml-1">*</span>}
+                          </Label>
+                          <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                            attr.field_type === 'select' ? 'bg-purple-100 text-purple-700' :
+                            attr.field_type === 'number' ? 'bg-green-100 text-green-700' :
+                            'bg-blue-100 text-blue-700'
+                          }`}>
+                            {attr.field_type}
+                          </span>
+                        </div>
+                      {attr.field_type === 'select' ? (
+                        <div>
+                          <select
+                            value={productAttributes[attr.id] || ''}
+                            onChange={(e) => setProductAttributes(prev => ({ ...prev, [attr.id]: e.target.value }))}
+                            className="mt-1 w-full border border-gray-300 rounded px-3 py-2 text-sm"
+                            required={attr.is_required}
+                          >
+                            <option value="">Select {attr.name.toLowerCase()}</option>
+                            {attr.options.map((option) => (
+                              <option key={option.id} value={option.value}>
+                                {option.value}
+                              </option>
+                            ))}
+                          </select>
+                          {attr.options.length === 0 && (
+                            <p className="text-xs text-orange-600 mt-1">No options configured for this attribute</p>
+                          )}
+                        </div>
+                      ) : attr.field_type === 'number' ? (
+                        <div>
+                          <Input
+                            type="number"
+                            value={productAttributes[attr.id] || ''}
+                            onChange={(e) => setProductAttributes(prev => ({ ...prev, [attr.id]: e.target.value }))}
+                            placeholder="Enter numeric value (e.g., 10, 25.5)"
+                            className="mt-1"
+                            required={attr.is_required}
+                            step="any"
+                            min="0"
+                          />
+                          <div className="mt-1 text-xs text-gray-500">
+                            <p>• Enter a numeric value (decimals allowed)</p>
+                            <p>• This will be used for range filtering on the website</p>
+                            <p>• Examples: Size (8, 10, 12), Weight (1.5, 2.0), Length (30, 45)</p>
+                          </div>
+                        </div>
+                      ) : (
+                        <div>
+                          <Input
+                            type="text"
+                            value={productAttributes[attr.id] || ''}
+                            onChange={(e) => setProductAttributes(prev => ({ ...prev, [attr.id]: e.target.value }))}
+                            placeholder={`Enter ${attr.name.toLowerCase()} (e.g., Cotton, Red, Large)`}
+                            className="mt-1"
+                            required={attr.is_required}
+                            maxLength={100}
+                          />
+                          <div className="mt-1 text-xs text-gray-500">
+                            <p>• Enter a descriptive text value</p>
+                            <p>• This will be searchable on the website</p>
+                            <p>• Examples: Material (Cotton, Polyester), Color (Red, Blue), Pattern (Striped, Solid)</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                ) : (
+                  <div className="text-center py-6">
+                    <p className="text-sm text-gray-500 mb-2">No specific attributes defined for this category</p>
+                    <p className="text-xs text-gray-400">Attributes can be added in the Categories management section</p>
+                  </div>
+                )}
+                
+                {/* Attribute Preview */}
+                {Object.keys(productAttributes).length > 0 && (
+                  <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                    <h4 className="text-sm font-semibold text-green-800 mb-2">Preview - How customers will see these attributes:</h4>
+                    <div className="space-y-2">
+                      {categoryAttributes
+                        .filter(attr => productAttributes[attr.id])
+                        .map(attr => (
+                          <div key={attr.id} className="flex items-center gap-2 text-sm">
+                            <span className="font-medium text-green-700">{attr.name}:</span>
+                            <span className="text-green-600">{productAttributes[attr.id]}</span>
+                            <span className="text-xs text-green-500">
+                              ({attr.field_type === 'number' ? 'filterable by range' : 
+                                attr.field_type === 'select' ? 'filterable by selection' : 'searchable'})
+                            </span>
+                          </div>
+                        ))
+                      }
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             <div>
               <Label>Product Image</Label>
               <div className="mt-1 border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
