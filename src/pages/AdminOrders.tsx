@@ -106,8 +106,10 @@ const AdminOrders = () => {
         return "bg-red-100 text-red-800";
       case "dispatched":
         return "bg-blue-100 text-blue-800";
-      case "confirmed":
+      case "packed":
         return "bg-purple-100 text-purple-800";
+      case "confirmed":
+        return "bg-green-100 text-green-800";
       default:
         return "bg-yellow-100 text-yellow-800";
     }
@@ -119,7 +121,7 @@ const AdminOrders = () => {
         <div className="mb-8">
           <h2 className="text-3xl font-bold text-gray-900 mb-4">Orders</h2>
           <div className="flex gap-2 flex-wrap">
-            {["all", "placed", "confirmed", "dispatched", "delivered", "cancelled"].map((s) => (
+            {["all", "placed", "confirmed", "packed", "dispatched", "delivered", "cancelled"].map((s) => (
               <Button
                 key={s}
                 size="sm"
@@ -241,6 +243,7 @@ const AdminOrders = () => {
                 >
                   <option value="placed">Placed</option>
                   <option value="confirmed">Confirmed</option>
+                  <option value="packed">Packed</option>
                   <option value="dispatched">Dispatched</option>
                   <option value="delivered">Delivered</option>
                   <option value="cancelled">Cancelled</option>

@@ -1,6 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { ShoppingBag } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useCart } from "@/contexts/CartContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { useState } from "react";
+import { toast } from "@/hooks/use-toast";
 
 interface ProductCardProps {
   name: string;
@@ -11,6 +15,45 @@ interface ProductCardProps {
 }
 
 const ProductCard = ({ name, price, image, category, id = "1" }: ProductCardProps) => {
+  const { addToCart, loading } = useCart();
+  const { isAuthenticated } = useAuth();
+  const [addingToCart, setAddingToCart] = useState(false);
+
+  const handleAddToCart = async (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent navigation to product page
+    e.stopPropagation();
+
+    if (!isAuthenticated) {
+      toast({
+        title: "Login Required",
+        description: "Please login to add items to your cart",
+        variant: "destructive"
+      });
+      // Redirect to login page after a short delay
+      setTimeout(() => {
+        window.location.href = '/login';
+      }, 1000);
+      return;
+    }
+
+    setAddingToCart(true);
+    const success = await addToCart(parseInt(id));
+    
+    if (success) {
+      toast({
+        title: "Added to cart",
+        description: `${name} has been added to your cart`
+      });
+    } else {
+      toast({
+        title: "Error",
+        description: "Failed to add item to cart. Please try again.",
+        variant: "destructive"
+      });
+    }
+    setAddingToCart(false);
+  };
+
   return (
     <Link to={`/product/${id}`} className="group cursor-pointer block">
       <div className="relative aspect-[4/5] sm:aspect-[3/4] overflow-hidden rounded-sm bg-muted mb-4">
@@ -23,6 +66,8 @@ const ProductCard = ({ name, price, image, category, id = "1" }: ProductCardProp
         <Button 
           size="icon"
           className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+          onClick={handleAddToCart}
+          disabled={loading || addingToCart}
         >
           <ShoppingBag className="h-4 w-4" />
         </Button>

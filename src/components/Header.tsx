@@ -1,8 +1,10 @@
-import { ShoppingBag, Menu, Search, User, LogOut, X } from "lucide-react";
+import { Menu, Search, User, LogOut, X, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
+import CartIcon from "./CartIcon";
+import CartDrawer from "./CartDrawer";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,6 +18,7 @@ const Header = () => {
   const navigate = useNavigate();
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [cartOpen, setCartOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -99,6 +102,12 @@ const Header = () => {
                     Profile
                   </Link>
                 </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/orders" className="cursor-pointer">
+                    <Package className="mr-2 h-4 w-4" />
+                    My Orders
+                  </Link>
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
                   <LogOut className="mr-2 h-4 w-4" />
                   Logout
@@ -113,14 +122,14 @@ const Header = () => {
             </Link>
           )}
 
-          <Button variant="ghost" size="icon" className="relative">
-            <ShoppingBag className="h-5 w-5" />
-            <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-accent text-[10px] flex items-center justify-center text-accent-foreground font-medium">
-              0
-            </span>
-          </Button>
+          <CartIcon onClick={() => setCartOpen(true)} />
         </div>
       </div>
+      
+      <CartDrawer 
+        isOpen={cartOpen} 
+        onClose={() => setCartOpen(false)} 
+      />
     </header>
   );
 };

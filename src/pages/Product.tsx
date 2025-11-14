@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -7,6 +7,9 @@ import { ShoppingBag, Heart, ChevronLeft } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { getPublicProductDetail } from "@/lib/api";
+import { useCart } from "@/contexts/CartContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "@/hooks/use-toast";
 
 type ProductData = {
   id: number;
@@ -31,6 +34,9 @@ const getImageUrl = (imagePath: string | null): string => {
 
 const Product = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const { addToCart, loading: cartLoading } = useCart();
+  const { isAuthenticated } = useAuth();
   const [quantity, setQuantity] = useState(1);
   const [selectedSize, setSelectedSize] = useState<string>("");
   const [product, setProduct] = useState<ProductData | null>(null);
@@ -68,6 +74,34 @@ const Product = () => {
   const selectedVariant = product?.variants?.find(v => v.size === selectedSize);
   const availableStock = selectedVariant?.stock || 0;
   const hasVariants = product?.variants && product.variants.length > 0;
+
+  const handleAddToCart = async () => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to add items to your cart.",
+        variant: "destructive",
+      });
+      navigate('/login');
+      return;
+    }
+
+    if (!product) return;
+
+    try {
+      await addToCart(product.id, quantity, selectedSize || undefined);
+      toast({
+        title: "Added to Cart",
+        description: `${product.name} has been added to your cart.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add item to cart. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
   if (loading) {
     return (
@@ -214,13 +248,16 @@ const Product = () => {
               <Button 
                 className="flex-1 h-12" 
                 size="lg"
-                disabled={!hasVariants ? product.stock === 0 : (!selectedSize || availableStock === 0)}
+                disabled={!hasVariants ? product.stock === 0 : (!selectedSize || availableStock === 0) || cartLoading}
+                onClick={handleAddToCart}
               >
                 <ShoppingBag className="h-5 w-5 mr-2" />
-                {!hasVariants ? (
-                  product.stock === 0 ? "Out of Stock" : "Add to Cart"
-                ) : (
-                  !selectedSize ? "Select a Size" : availableStock === 0 ? "Out of Stock" : "Add to Cart"
+                {cartLoading ? "Adding..." : (
+                  !hasVariants ? (
+                    product.stock === 0 ? "Out of Stock" : "Add to Cart"
+                  ) : (
+                    !selectedSize ? "Select a Size" : availableStock === 0 ? "Out of Stock" : "Add to Cart"
+                  )
                 )}
               </Button>
               <Button variant="outline" size="icon" className="h-12 w-12">
