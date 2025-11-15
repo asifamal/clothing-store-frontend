@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Package, Eye, ArrowLeft } from 'lucide-react'
+import { Package, Eye, ArrowLeft, Download } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -24,6 +24,7 @@ interface Order {
   total_amount: string
   created_at: string
   updated_at: string
+  invoice_pdf?: string
   address: {
     street: string
     city: string
@@ -230,6 +231,17 @@ const Orders: React.FC = () => {
                         <Eye className="mr-2 h-4 w-4" />
                         View Details
                       </Button>
+                      
+                      {order.invoice_pdf && (
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => window.open(`http://localhost:8000${order.invoice_pdf}`, '_blank')}
+                        >
+                          <Download className="mr-2 h-4 w-4" />
+                          Invoice
+                        </Button>
+                      )}
                       
                       {order.status === 'delivered' && (
                         <Button variant="outline" size="sm">

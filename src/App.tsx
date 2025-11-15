@@ -16,6 +16,7 @@ import Profile from "./pages/Profile";
 import Orders from "./pages/Orders";
 import Debug from "./pages/Debug";
 import Checkout from "./pages/Checkout";
+import VerifyOTP from "./pages/VerifyOTP";
 import OrderSuccess from "./pages/OrderSuccess";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminUsers from "./pages/AdminUsers";
@@ -46,6 +47,7 @@ const App = () => (
             <Route path="/orders" element={<Orders />} />
             <Route path="/debug" element={<Debug />} />
             <Route path="/checkout" element={<Checkout />} />
+            <Route path="/verify-otp" element={<VerifyOTP />} />
             <Route path="/order-success/:orderId" element={<OrderSuccess />} />
             <Route path="/admin-dashboard" element={<AdminLayout><AdminAnalytics /></AdminLayout>} />
               <Route path="/admin-dashboard/users" element={<AdminLayout><AdminUsers /></AdminLayout>} />

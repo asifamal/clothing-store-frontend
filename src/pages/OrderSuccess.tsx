@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { CheckCircle, Package, ArrowRight } from 'lucide-react'
+import { CheckCircle, Package, ArrowRight, FileText, Download } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -13,6 +13,7 @@ interface OrderDetails {
   status: string
   total_amount: string
   created_at: string
+  invoice_pdf?: string
   address: {
     street: string
     city: string
@@ -209,20 +210,48 @@ const OrderSuccess: React.FC = () => {
           </Card>
 
           {/* Action Buttons */}
-          <div className="flex gap-4 justify-center">
-            <Button 
-              onClick={() => navigate('/')}
-              variant="outline"
-            >
-              Continue Shopping
-            </Button>
-            <Button 
-              onClick={() => navigate('/profile')}
-              className="flex items-center gap-2"
-            >
-              View Orders
-              <ArrowRight className="h-4 w-4" />
-            </Button>
+          <div className="flex flex-col gap-4">
+            {/* Invoice Download */}
+            {order.invoice_pdf && (
+              <Card className="bg-blue-50 border-blue-200">
+                <CardContent className="py-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                        <FileText className="h-5 w-5 text-blue-600" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-blue-900">Invoice Generated</h4>
+                        <p className="text-sm text-blue-700">Your order invoice is ready</p>
+                      </div>
+                    </div>
+                    <Button
+                      onClick={() => window.open(`http://localhost:8000${order.invoice_pdf}`, '_blank')}
+                      className="flex items-center gap-2"
+                    >
+                      <Download className="h-4 w-4" />
+                      Download Invoice
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            <div className="flex gap-4 justify-center">
+              <Button 
+                onClick={() => navigate('/')}
+                variant="outline"
+              >
+                Continue Shopping
+              </Button>
+              <Button 
+                onClick={() => navigate('/orders')}
+                className="flex items-center gap-2"
+              >
+                View Orders
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </div>
       </div>

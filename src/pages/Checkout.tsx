@@ -11,6 +11,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { toast } from '@/hooks/use-toast'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
+import { getUserAddresses } from '@/lib/api'
 
 interface Address {
   id: number
@@ -39,29 +40,21 @@ const Checkout: React.FC = () => {
       if (!tokens?.access) return
 
       try {
-        const response = await fetch('http://localhost:8000/api/users/profile/addresses/', {
-          headers: {
-            'Authorization': `Bearer ${tokens.access}`
-          }
-        })
-
-        if (response.ok) {
-          const data = await response.json()
-          setAddresses(data.addresses || [])
-          
-          // Auto-select default address
-          const defaultAddress = data.addresses?.find((addr: Address) => addr.is_default)
-          if (defaultAddress) {
-            setSelectedAddress(defaultAddress.id.toString())
-          } else if (data.addresses?.length > 0) {
-            setSelectedAddress(data.addresses[0].id.toString())
-          }
+        const response = await getUserAddresses(tokens.access)
+        setAddresses(response.data || [])
+        
+        // Auto-select default address
+        const defaultAddress = response.data?.find((addr: Address) => addr.is_default)
+        if (defaultAddress) {
+          setSelectedAddress(defaultAddress.id.toString())
+        } else if (response.data?.length > 0) {
+          setSelectedAddress(response.data[0].id.toString())
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching addresses:', error)
         toast({
           title: "Error",
-          description: "Failed to load addresses",
+          description: error.message || "Failed to load addresses",
           variant: "destructive"
         })
       } finally {
@@ -96,7 +89,8 @@ const Checkout: React.FC = () => {
     setLoading(true)
 
     try {
-      const response = await fetch('http://localhost:8000/api/orders/place/', {
+      // Generate OTP for order verification
+      const response = await fetch('http://localhost:8000/api/orders/generate-otp/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -110,18 +104,19 @@ const Checkout: React.FC = () => {
       const data = await response.json()
 
       if (response.ok && data.status === 'success') {
-        // Clear cart and redirect to success page
-        await clearCart()
-        navigate(`/order-success/${data.data.order.id}`)
-        
         toast({
-          title: "Order placed successfully",
-          description: `Order #${data.data.order.id} has been placed`
+          title: "OTP Sent",
+          description: "Please check your email for the verification code"
+        })
+        
+        // Navigate to OTP verification page
+        navigate('/verify-otp', { 
+          state: { addressId: parseInt(selectedAddress) } 
         })
       } else {
         toast({
-          title: "Order failed",
-          description: data.message || "Failed to place order",
+          title: "Failed to Send OTP",
+          description: data.message || "Failed to send OTP",
           variant: "destructive"
         })
       }
@@ -192,6 +187,7 @@ const Checkout: React.FC = () => {
                     <div className="flex-1">
                       <h4 className="font-medium">{item.product.name}</h4>
                       <p className="text-sm text-gray-600">
+                        {item.size && <span className="font-medium">Size: {item.size} • </span>}
                         ${price.toFixed(2)} × {item.quantity}
                       </p>
                     </div>

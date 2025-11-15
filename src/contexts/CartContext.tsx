@@ -11,12 +11,13 @@ export interface CartItem {
     image?: string
   }
   quantity: number
+  size?: string
 }
 
 interface CartContextType {
   items: CartItem[]
   loading: boolean
-  addToCart: (productId: number, quantity?: number) => Promise<boolean>
+  addToCart: (productId: number, quantity?: number, size?: string) => Promise<boolean>
   updateQuantity: (itemId: number, quantity: number) => Promise<boolean>
   removeFromCart: (itemId: number) => Promise<boolean>
   clearCart: () => Promise<boolean>
@@ -89,7 +90,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     }
   }
 
-  const addToCart = async (productId: number, quantity: number = 1): Promise<boolean> => {
+  const addToCart = async (productId: number, quantity: number = 1, size?: string): Promise<boolean> => {
     if (!isAuthenticated || !tokens) {
       return false
     }
@@ -100,7 +101,8 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
         method: 'POST',
         body: JSON.stringify({
           product_id: productId,
-          quantity
+          quantity,
+          ...(size && { size })
         })
       })
       

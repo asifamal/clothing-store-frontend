@@ -60,6 +60,7 @@ const FeaturedProducts = () => {
                 price={product.price}
                 category={product.category.name}
                 image={getImageUrl(product.image)}
+                stock={product.stock}
               />
             ))}
           </div>

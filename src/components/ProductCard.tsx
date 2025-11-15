@@ -12,12 +12,14 @@ interface ProductCardProps {
   image: string;
   category: string;
   id?: string;
+  stock?: number;
 }
 
-const ProductCard = ({ name, price, image, category, id = "1" }: ProductCardProps) => {
+const ProductCard = ({ name, price, image, category, id = "1", stock = 0 }: ProductCardProps) => {
   const { addToCart, loading } = useCart();
   const { isAuthenticated } = useAuth();
   const [addingToCart, setAddingToCart] = useState(false);
+  const isOutOfStock = stock === 0;
 
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault(); // Prevent navigation to product page
@@ -63,14 +65,20 @@ const ProductCard = ({ name, price, image, category, id = "1" }: ProductCardProp
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
         <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/10 transition-colors duration-300" />
-        <Button 
-          size="icon"
-          className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-          onClick={handleAddToCart}
-          disabled={loading || addingToCart}
-        >
-          <ShoppingBag className="h-4 w-4" />
-        </Button>
+        {isOutOfStock ? (
+          <div className="absolute bottom-4 right-4 bg-destructive text-destructive-foreground px-3 py-2 rounded-sm text-sm font-medium">
+            Out of Stock
+          </div>
+        ) : (
+          <Button 
+            size="icon"
+            className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+            onClick={handleAddToCart}
+            disabled={loading || addingToCart}
+          >
+            <ShoppingBag className="h-4 w-4" />
+          </Button>
+        )}
       </div>
       <div className="space-y-1">
         <p className="text-xs text-muted-foreground uppercase tracking-wider">{category}</p>

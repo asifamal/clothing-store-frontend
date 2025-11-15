@@ -74,6 +74,21 @@ const Product = () => {
   const selectedVariant = product?.variants?.find(v => v.size === selectedSize);
   const availableStock = selectedVariant?.stock || 0;
   const hasVariants = product?.variants && product.variants.length > 0;
+  
+  // Calculate total stock - check both main stock AND variant stock
+  const totalVariantStock = hasVariants 
+    ? product.variants.reduce((sum, v) => sum + v.stock, 0) 
+    : 0;
+  
+  // Determine if product is completely out of stock
+  // For products with variants: check main stock OR if all variants are out of stock
+  // For products without variants: check main stock only
+  const isCompletelyOutOfStock = hasVariants 
+    ? (product?.stock || 0) === 0 || totalVariantStock === 0
+    : (product?.stock || 0) === 0;
+  
+  // Check if selected size is out of stock
+  const isSelectedSizeOutOfStock = hasVariants && selectedSize && availableStock === 0;
 
   const handleAddToCart = async () => {
     if (!isAuthenticated) {
@@ -169,7 +184,11 @@ const Product = () => {
             <p className="text-muted-foreground leading-relaxed">{product.description}</p>
 
             {/* Stock Status */}
-            {hasVariants ? (
+            {isCompletelyOutOfStock ? (
+              <div className="text-sm">
+                <p className="text-red-600 font-semibold">Out of Stock</p>
+              </div>
+            ) : hasVariants ? (
               <div className="text-sm">
                 {selectedSize && availableStock > 0 ? (
                   <p className="text-green-600">In Stock ({availableStock} available in size {selectedSize})</p>
@@ -181,11 +200,7 @@ const Product = () => {
               </div>
             ) : (
               <div className="text-sm">
-                {product.stock > 0 ? (
-                  <p className="text-green-600">In Stock ({product.stock} available)</p>
-                ) : (
-                  <p className="text-red-600">Out of Stock</p>
-                )}
+                <p className="text-green-600">In Stock ({product.stock} available)</p>
               </div>
             )}
 
@@ -194,19 +209,16 @@ const Product = () => {
               <div className="space-y-3">
                 <Label className="text-sm font-medium">Select Size</Label>
                 <RadioGroup value={selectedSize} onValueChange={setSelectedSize} className="flex gap-3">
-                  {product.variants.map((variant) => (
+                  {product.variants.filter(variant => variant.stock > 0).map((variant) => (
                     <div key={variant.size}>
                       <RadioGroupItem 
                         value={variant.size} 
                         id={variant.size} 
                         className="peer sr-only"
-                        disabled={variant.stock === 0}
                       />
                       <Label
                         htmlFor={variant.size}
-                        className={`flex items-center justify-center w-12 h-12 border border-border rounded-sm cursor-pointer transition-all peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary peer-data-[state=checked]:text-primary-foreground hover:border-primary/50 ${
-                          variant.stock === 0 ? 'opacity-50 cursor-not-allowed line-through' : ''
-                        }`}
+                        className="flex items-center justify-center w-12 h-12 border border-border rounded-sm cursor-pointer transition-all peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary peer-data-[state=checked]:text-primary-foreground hover:border-primary/50"
                       >
                         {variant.size}
                       </Label>
@@ -224,7 +236,7 @@ const Product = () => {
                   variant="outline"
                   size="icon"
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  disabled={!hasVariants ? product.stock === 0 : availableStock === 0}
+                  disabled={isCompletelyOutOfStock || isSelectedSizeOutOfStock || (hasVariants && !selectedSize)}
                 >
                   -
                 </Button>
@@ -236,7 +248,7 @@ const Product = () => {
                     const maxStock = hasVariants ? availableStock : product.stock;
                     setQuantity(Math.min(maxStock, quantity + 1));
                   }}
-                  disabled={!hasVariants ? product.stock === 0 : availableStock === 0}
+                  disabled={isCompletelyOutOfStock || isSelectedSizeOutOfStock || (hasVariants && !selectedSize)}
                 >
                   +
                 </Button>
@@ -248,15 +260,17 @@ const Product = () => {
               <Button 
                 className="flex-1 h-12" 
                 size="lg"
-                disabled={!hasVariants ? product.stock === 0 : (!selectedSize || availableStock === 0) || cartLoading}
+                disabled={isCompletelyOutOfStock || isSelectedSizeOutOfStock || (hasVariants && !selectedSize) || cartLoading}
                 onClick={handleAddToCart}
               >
                 <ShoppingBag className="h-5 w-5 mr-2" />
                 {cartLoading ? "Adding..." : (
-                  !hasVariants ? (
-                    product.stock === 0 ? "Out of Stock" : "Add to Cart"
-                  ) : (
-                    !selectedSize ? "Select a Size" : availableStock === 0 ? "Out of Stock" : "Add to Cart"
+                  isCompletelyOutOfStock ? "Out of Stock" : (
+                    isSelectedSizeOutOfStock ? "Out of Stock" : (
+                      hasVariants ? (
+                        !selectedSize ? "Select a Size" : "Add to Cart"
+                      ) : "Add to Cart"
+                    )
                   )
                 )}
               </Button>
