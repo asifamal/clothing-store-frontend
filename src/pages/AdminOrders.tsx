@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { getAdminOrders, getAdminOrderDetail, updateAdminOrder } from "@/lib/api";
+import { getAdminOrders, getAdminOrderDetail, updateAdminOrder, getCourierPartners } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -20,8 +20,11 @@ type OrderDetail = {
   id: number;
   customer: string;
   email: string;
+  contact_phone: string;
   total_amount: number;
   status: string;
+  awb_number: string;
+  courier_partner: string;
   created_at: string;
   updated_at: string;
   items: Array<{
@@ -51,6 +54,11 @@ const AdminOrders = () => {
   const [orderDetail, setOrderDetail] = useState<OrderDetail | null>(null);
   const [newStatus, setNewStatus] = useState("");
   const [updating, setUpdating] = useState(false);
+  
+  // Dispatch fields
+  const [awbNumber, setAwbNumber] = useState("");
+  const [courierPartner, setCourierPartner] = useState("");
+  const [courierPartners, setCourierPartners] = useState<Array<{id: number, name: string}>>([]);
 
   const fetchOrders = async () => {
     setLoading(true);
@@ -69,11 +77,28 @@ const AdminOrders = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [access, status]);
 
+  useEffect(() => {
+    const fetchCouriers = async () => {
+      try {
+        const response = await getCourierPartners();
+        if (response.status === 'success') {
+          setCourierPartners(response.data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch courier partners:', error);
+      }
+    };
+    fetchCouriers();
+  }, []);
+
   const handleViewDetails = async (order: Order) => {
     try {
       const res = await getAdminOrderDetail(access, order.id);
       setOrderDetail(res.data);
       setNewStatus(res.data.status);
+      // Prefill AWB and courier partner if they exist
+      setAwbNumber(res.data.awb_number || '');
+      setCourierPartner(res.data.courier_partner || '');
       setShowDetailModal(true);
     } catch (e) {
       toast({ variant: "destructive", title: "Error", description: (e as Error).message });
@@ -82,12 +107,28 @@ const AdminOrders = () => {
 
   const handleUpdateStatus = async () => {
     if (!orderDetail || !newStatus) return;
+    
+    // If changing to dispatched, validate AWB and courier
+    if (newStatus === 'dispatched' && orderDetail.status !== 'dispatched') {
+      if (!awbNumber.trim() || !courierPartner.trim()) {
+        toast({ variant: "destructive", title: "Error", description: "Please provide AWB number and courier partner for dispatch" });
+        return;
+      }
+    }
+    
     setUpdating(true);
     try {
-      await updateAdminOrder(access, orderDetail.id, newStatus);
-      toast({ title: "Success", description: "Order status updated" });
+      if (newStatus === 'dispatched' && orderDetail.status !== 'dispatched') {
+        await updateAdminOrder(access, orderDetail.id, newStatus, awbNumber, courierPartner);
+        toast({ title: "Success", description: "Order marked as dispatched and notification sent" });
+      } else {
+        await updateAdminOrder(access, orderDetail.id, newStatus);
+        toast({ title: "Success", description: "Order status updated" });
+      }
       setShowDetailModal(false);
       setOrderDetail(null);
+      setAwbNumber("");
+      setCourierPartner("");
       fetchOrders();
     } catch (e) {
       toast({ variant: "destructive", title: "Error", description: (e as Error).message });
@@ -100,18 +141,18 @@ const AdminOrders = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
+      case "pending":
+        return "bg-yellow-100 text-yellow-800";
+      case "confirmed":
+        return "bg-green-100 text-green-800";
+      case "dispatched":
+        return "bg-blue-100 text-blue-800";
       case "delivered":
         return "bg-green-100 text-green-800";
       case "cancelled":
         return "bg-red-100 text-red-800";
-      case "dispatched":
-        return "bg-blue-100 text-blue-800";
-      case "packed":
-        return "bg-purple-100 text-purple-800";
-      case "confirmed":
-        return "bg-green-100 text-green-800";
       default:
-        return "bg-yellow-100 text-yellow-800";
+        return "bg-gray-100 text-gray-800";
     }
   };
 
@@ -121,14 +162,14 @@ const AdminOrders = () => {
         <div className="mb-8">
           <h2 className="text-3xl font-bold text-gray-900 mb-4">Orders</h2>
           <div className="flex gap-2 flex-wrap">
-            {["all", "placed", "confirmed", "packed", "dispatched", "delivered", "cancelled"].map((s) => (
+            {["all", "pending", "confirmed", "dispatched", "delivered", "cancelled"].map((s) => (
               <Button
                 key={s}
                 size="sm"
                 variant={status === s ? "default" : "outline"}
                 onClick={() => setStatus(s)}
               >
-                {s.charAt(0).toUpperCase() + s.slice(1)}
+                {s === "pending" ? "Pending Confirmation" : s.charAt(0).toUpperCase() + s.slice(1)}
               </Button>
             ))}
           </div>
@@ -201,6 +242,10 @@ const AdminOrders = () => {
                   <p className="text-sm text-gray-600">Email</p>
                   <p className="font-medium text-gray-900">{orderDetail.email}</p>
                 </div>
+                <div>
+                  <p className="text-sm text-gray-600">Contact Phone</p>
+                  <p className="font-medium text-gray-900">{orderDetail.contact_phone || 'N/A'}</p>
+                </div>
               </div>
 
               {/* Address */}
@@ -241,13 +286,43 @@ const AdminOrders = () => {
                   onChange={(e) => setNewStatus(e.target.value)}
                   className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
                 >
-                  <option value="placed">Placed</option>
+                  <option value="pending">Pending Confirmation</option>
                   <option value="confirmed">Confirmed</option>
-                  <option value="packed">Packed</option>
                   <option value="dispatched">Dispatched</option>
                   <option value="delivered">Delivered</option>
                   <option value="cancelled">Cancelled</option>
                 </select>
+                
+                {/* Show dispatch fields when dispatched is selected */}
+                {newStatus === 'dispatched' && (
+                  <div className="mt-4 space-y-3 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <div>
+                      <Label className="text-sm font-medium text-gray-900 mb-1 block">Courier Partner *</Label>
+                      <select
+                        value={courierPartner}
+                        onChange={(e) => setCourierPartner(e.target.value)}
+                        className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white"
+                      >
+                        <option value="">Select Courier Partner</option>
+                        {courierPartners.map((partner) => (
+                          <option key={partner.id} value={partner.name}>
+                            {partner.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-gray-900 mb-1 block">AWB / Tracking Number *</Label>
+                      <input
+                        type="text"
+                        value={awbNumber}
+                        onChange={(e) => setAwbNumber(e.target.value)}
+                        placeholder="Enter tracking number"
+                        className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Total Amount */}

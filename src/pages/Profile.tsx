@@ -101,7 +101,7 @@ const addressTypeLabels = {
 };
 
 export default function Profile() {
-  const { isAuthenticated, tokens, user: authUser } = useAuth();
+  const { isAuthenticated, tokens, user: authUser, updateUser } = useAuth();
   const [user, setUser] = useState<UserData | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [addresses, setAddresses] = useState<Address[]>([]);
@@ -196,7 +196,12 @@ export default function Profile() {
     try {
       if (!tokens?.access) throw new Error('Please log in');
 
-      await updateUserProfile(tokens.access, profileForm, avatarFile || undefined);
+      const response = await updateUserProfile(tokens.access, profileForm, avatarFile || undefined);
+      
+      // Update AuthContext with new phone number if user data is returned
+      if (response.data?.user) {
+        updateUser(response.data.user);
+      }
       
       toast({
         title: "Success",

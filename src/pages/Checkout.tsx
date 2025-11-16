@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
 import { useCart } from '@/contexts/CartContext'
 import { useAuth } from '@/contexts/AuthContext'
 import { toast } from '@/hooks/use-toast'
@@ -31,6 +32,8 @@ const Checkout: React.FC = () => {
   
   const [addresses, setAddresses] = useState<Address[]>([])
   const [selectedAddress, setSelectedAddress] = useState<string>('')
+  const [contactPhone, setContactPhone] = useState<string>('')
+  const [useProfilePhone, setUseProfilePhone] = useState<boolean>(true)
   const [loading, setLoading] = useState(false)
   const [addressesLoading, setAddressesLoading] = useState(true)
 
@@ -86,6 +89,17 @@ const Checkout: React.FC = () => {
       return
     }
 
+    const phoneToUse = useProfilePhone ? (user?.phone_number || '') : contactPhone
+    
+    if (!phoneToUse.trim()) {
+      toast({
+        title: "Phone number required",
+        description: "Please provide a contact phone number",
+        variant: "destructive"
+      })
+      return
+    }
+
     setLoading(true)
 
     try {
@@ -109,9 +123,12 @@ const Checkout: React.FC = () => {
           description: "Please check your email for the verification code"
         })
         
-        // Navigate to OTP verification page
+        // Navigate to OTP verification page with phone number
         navigate('/verify-otp', { 
-          state: { addressId: parseInt(selectedAddress) } 
+          state: { 
+            addressId: parseInt(selectedAddress),
+            contactPhone: phoneToUse
+          } 
         })
       } else {
         toast({
@@ -259,13 +276,81 @@ const Checkout: React.FC = () => {
                 </Button>
               </div>
               
+              {/* Contact Phone Section */}
+              <div className="mt-6 border-t pt-6">
+                <div className="mb-4">
+                  <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
+                    <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                    </svg>
+                    Contact Number for Delivery
+                  </h3>
+                  <p className="text-sm text-gray-500 mt-1">We'll use this number to contact you about your delivery</p>
+                </div>
+                
+                <div className="space-y-3">
+                  <label className="flex items-start p-4 border-2 rounded-lg cursor-pointer transition-all hover:border-blue-300 hover:bg-blue-50/50" 
+                         style={{ borderColor: useProfilePhone ? '#3b82f6' : '#e5e7eb', backgroundColor: useProfilePhone ? '#eff6ff' : 'white' }}>
+                    <input
+                      type="radio"
+                      checked={useProfilePhone}
+                      onChange={() => setUseProfilePhone(true)}
+                      className="mt-1 cursor-pointer"
+                    />
+                    <div className="ml-3 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-gray-900">Profile Phone Number</span>
+                        <Badge variant="secondary" className="text-xs">Recommended</Badge>
+                      </div>
+                      <p className="text-sm text-gray-600 mt-1 font-mono">{user?.phone_number || 'Not set - Please add phone in profile'}</p>
+                    </div>
+                  </label>
+                  
+                  <label className="flex items-start p-4 border-2 rounded-lg cursor-pointer transition-all hover:border-blue-300 hover:bg-blue-50/50"
+                         style={{ borderColor: !useProfilePhone ? '#3b82f6' : '#e5e7eb', backgroundColor: !useProfilePhone ? '#eff6ff' : 'white' }}>
+                    <input
+                      type="radio"
+                      checked={!useProfilePhone}
+                      onChange={() => setUseProfilePhone(false)}
+                      className="mt-1 cursor-pointer"
+                    />
+                    <div className="ml-3 flex-1">
+                      <span className="font-medium text-gray-900">Use Different Number</span>
+                      <p className="text-sm text-gray-500 mt-1">Enter an alternate contact number</p>
+                    </div>
+                  </label>
+                  
+                  {!useProfilePhone && (
+                    <div className="ml-7 mt-3 animate-in slide-in-from-top-2 duration-200">
+                      <Input
+                        type="tel"
+                        placeholder="Enter phone number (e.g., +1234567890)"
+                        value={contactPhone}
+                        onChange={(e) => setContactPhone(e.target.value)}
+                        className="border-2 focus:border-blue-500 transition-colors"
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+              
               <div className="mt-6">
                 <Button 
                   onClick={handlePlaceOrder}
                   disabled={loading || !selectedAddress || addresses.length === 0}
-                  className="w-full"
+                  className="w-full h-12 text-base font-semibold"
                 >
-                  {loading ? 'Placing Order...' : 'Place Order'}
+                  {loading ? (
+                    <span className="flex items-center gap-2">
+                      <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Processing...
+                    </span>
+                  ) : (
+                    'Proceed to Payment Verification'
+                  )}
                 </Button>
               </div>
             </CardContent>

@@ -24,6 +24,7 @@ const VerifyOTP: React.FC = () => {
   const [placingOrder, setPlacingOrder] = useState(false)
 
   const addressId = location.state?.addressId
+  const contactPhone = location.state?.contactPhone
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -31,10 +32,10 @@ const VerifyOTP: React.FC = () => {
       return
     }
 
-    if (!addressId) {
+    if (!addressId || !contactPhone) {
       toast({
         title: "Error",
-        description: "No address selected. Please try again.",
+        description: "Missing order information. Please try again.",
         variant: "destructive"
       })
       navigate('/checkout')
@@ -106,7 +107,10 @@ const VerifyOTP: React.FC = () => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${tokens?.access}`
         },
-        body: JSON.stringify({ address_id: addressId })
+        body: JSON.stringify({ 
+          address_id: addressId,
+          contact_phone: contactPhone
+        })
       })
 
       const orderData = await orderResponse.json()

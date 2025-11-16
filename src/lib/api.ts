@@ -15,6 +15,7 @@ export interface User {
   username: string;
   email: string;
   role: "manager" | "customer";
+  phone_number?: string;
 }
 
 export interface AuthResponse {
@@ -681,19 +682,45 @@ export async function getAdminOrderDetail(accessToken: string, id: number) {
   return response.json();
 }
 
-export async function updateAdminOrder(accessToken: string, id: number, status: string) {
+export async function updateAdminOrder(accessToken: string, id: number, status: string, awbNumber?: string, courierPartner?: string) {
+  const body: any = { status };
+  
+  if (awbNumber) {
+    body.awb_number = awbNumber;
+  }
+  if (courierPartner) {
+    body.courier_partner = courierPartner;
+  }
+  
   const response = await fetch(`${API_BASE_URL}/admin/orders/${id}/`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${accessToken}`,
     },
-    body: JSON.stringify({ status }),
+    body: JSON.stringify(body),
   });
 
   if (!response.ok) {
     const err = await response.json().catch(() => ({ message: 'Failed to update order' }));
     throw new Error(err.message || 'Failed to update order');
+  }
+
+  const data = await response.json();
+  
+  // Check if the API returned an error in the response body
+  if (data.status === 'error') {
+    throw new Error(data.message || 'Failed to update order');
+  }
+
+  return data;
+}
+
+export async function getCourierPartners() {
+  const response = await fetch(`${API_BASE_URL}/orders/courier-partners/`);
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch courier partners');
   }
 
   return response.json();
