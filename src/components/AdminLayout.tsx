@@ -1,151 +1,225 @@
 import React, { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Menu, X, BarChart3, Users, Package, ShoppingCart, LogOut, Layers, ExternalLink } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import {
+  LayoutDashboard,
+  Package,
+  ShoppingCart,
+  Users,
+  FolderTree,
+  BarChart3,
+  Menu,
+  X,
+  LogOut,
+  ChevronDown,
+  Settings,
+  Bell,
+  Store,
+} from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
 }
 
 const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
-  const navigate = useNavigate();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
-  const { logout } = useAuth();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
+
+  const menuItems = [
+    { icon: LayoutDashboard, label: "Analytics", path: "/admin-dashboard" },
+    { icon: ShoppingCart, label: "Orders", path: "/admin-dashboard/orders" },
+    { icon: Package, label: "Products", path: "/admin-dashboard/products" },
+    { icon: FolderTree, label: "Categories", path: "/admin-dashboard/categories" },
+    { icon: Users, label: "Users", path: "/admin-dashboard/users" },
+  ];
 
   const handleLogout = () => {
     logout();
-    navigate("/login", { replace: true });
+    navigate("/login");
   };
-
-  const menuItems = [
-    { path: "/admin-dashboard", label: "Analytics", icon: <BarChart3 className="w-5 h-5" /> },
-    { path: "/admin-dashboard/users", label: "Users", icon: <Users className="w-5 h-5" /> },
-    { path: "/admin-dashboard/products", label: "Products", icon: <Package className="w-5 h-5" /> },
-    { path: "/admin-dashboard/categories", label: "Categories", icon: <Layers className="w-5 h-5" /> },
-    { path: "/admin-dashboard/orders", label: "Orders", icon: <ShoppingCart className="w-5 h-5" /> },
-  ];
 
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      {/* Mobile Sidebar Overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
       <aside
-        className={`${
-          sidebarOpen ? "w-64" : "w-20"
-        } bg-gray-900 text-white transition-all duration-300 hidden md:flex flex-col fixed h-full z-40`}
+        className={`fixed top-0 left-0 z-50 h-full w-64 bg-white/80 backdrop-blur-xl border-r border-slate-200 shadow-xl transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
       >
-        <div className="flex items-center justify-between p-4 border-b border-gray-800">
-          {sidebarOpen && <h1 className="text-xl font-bold">Store Admin</h1>}
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-1 hover:bg-gray-800 rounded"
-          >
-            {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </button>
-        </div>
-
-        <nav className="flex-1 p-4 space-y-2">
-          {menuItems.map((item) => (
+        <div className="flex flex-col h-full">
+          {/* Logo */}
+          <div className="flex items-center justify-between p-6 border-b border-slate-200">
+            <Link to="/admin-dashboard" className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                <Package className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                  Admin Panel
+                </h1>
+                <p className="text-xs text-slate-500">Clothing Store</p>
+              </div>
+            </Link>
             <button
-              key={item.path}
-              onClick={() => {
-                navigate(item.path);
-                setMobileMenuOpen(false);
-              }}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                isActive(item.path)
-                  ? "bg-blue-600 text-white"
-                  : "text-gray-300 hover:bg-gray-800"
-              }`}
-              title={!sidebarOpen ? item.label : ""}
+              onClick={() => setSidebarOpen(false)}
+              className="lg:hidden text-slate-500 hover:text-slate-700"
             >
-              {item.icon}
-              {sidebarOpen && <span>{item.label}</span>}
+              <X className="w-5 h-5" />
             </button>
-          ))}
-        </nav>
+          </div>
 
-        <div className="p-4 border-t border-gray-800 space-y-2">
-          <Button
-            variant="ghost"
-            className="w-full justify-start text-gray-300 hover:text-white hover:bg-gray-800"
-            onClick={() => navigate("/?asadmin=1")}
-          >
-            <ExternalLink className="w-5 h-5" />
-            {sidebarOpen && <span className="ml-3">Go to Website</span>}
-          </Button>
-          <Button
-            variant="ghost"
-            className="w-full justify-start text-gray-300 hover:text-white hover:bg-gray-800"
-            onClick={handleLogout}
-          >
-            <LogOut className="w-5 h-5" />
-            {sidebarOpen && <span className="ml-3">Logout</span>}
-          </Button>
+          {/* Navigation */}
+          <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+            {menuItems.map((item) => {
+              const Icon = item.icon;
+              const active = isActive(item.path);
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  onClick={() => setSidebarOpen(false)}
+                  className={`flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 group ${
+                    active
+                      ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-200"
+                      : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                  }`}
+                >
+                  <Icon
+                    className={`w-5 h-5 ${
+                      active ? "text-white" : "text-slate-400 group-hover:text-indigo-600"
+                    }`}
+                  />
+                  <span className="font-medium">{item.label}</span>
+                </Link>
+              );
+            })}
+          </nav>
+
+          {/* User Profile */}
+          <div className="p-4 border-t border-slate-200">
+            <div className="flex items-center space-x-3 p-3 rounded-xl bg-gradient-to-r from-slate-50 to-slate-100">
+              <Avatar className="w-10 h-10 border-2 border-white shadow-md">
+                <AvatarFallback className="bg-gradient-to-br from-indigo-600 to-purple-600 text-white font-semibold">
+                  {user?.username?.substring(0, 2).toUpperCase() || "AD"}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-slate-900 truncate">
+                  {user?.username || "Admin"}
+                </p>
+                <p className="text-xs text-slate-500">Administrator</p>
+              </div>
+            </div>
+          </div>
         </div>
       </aside>
 
-      {/* Mobile Header */}
-      <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-gray-900 text-white flex items-center justify-between px-4 z-30">
-        <button
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="p-2 hover:bg-gray-800 rounded"
-        >
-          {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-        </button>
-        <h1 className="text-lg font-bold">Store Admin</h1>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-gray-300 hover:text-white"
-            onClick={() => navigate("/?asadmin=1")}
-            title="Go to website"
-          >
-            <ExternalLink className="w-5 h-5" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-gray-300 hover:text-white"
-            onClick={handleLogout}
-          >
-            <LogOut className="w-5 h-5" />
-          </Button>
-        </div>
-      </div>
-
-      {/* Mobile Menu */}
-      {mobileMenuOpen && (
-        <div className="md:hidden fixed top-16 left-0 right-0 bg-gray-900 text-white z-20 p-4 space-y-2">
-          {menuItems.map((item) => (
-            <button
-              key={item.path}
-              onClick={() => {
-                navigate(item.path);
-                setMobileMenuOpen(false);
-              }}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                isActive(item.path)
-                  ? "bg-blue-600 text-white"
-                  : "text-gray-300 hover:bg-gray-800"
-              }`}
-            >
-              {item.icon}
-              <span>{item.label}</span>
-            </button>
-          ))}
-        </div>
-      )}
-
       {/* Main Content */}
-      <main className={`flex-1 ${sidebarOpen ? "md:ml-64" : "md:ml-20"} transition-all duration-300 pt-16 md:pt-0`}>
-        {children}
-      </main>
+      <div className="lg:pl-64">
+        {/* Header */}
+        <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-xl border-b border-slate-200 shadow-sm">
+          <div className="flex items-center justify-between px-4 lg:px-8 py-4">
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="lg:hidden p-2 rounded-lg hover:bg-slate-100 text-slate-600"
+              >
+                <Menu className="w-6 h-6" />
+              </button>
+              <div>
+                <h2 className="text-2xl font-bold text-slate-900">
+                  {menuItems.find((item) => isActive(item.path))?.label || "Admin Panel"}
+                </h2>
+                <p className="text-sm text-slate-500">
+                  Manage your store efficiently
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-3">
+              {/* Notifications */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="relative rounded-full hover:bg-slate-100"
+              >
+                <Bell className="w-5 h-5 text-slate-600" />
+                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+              </Button>
+
+              {/* Settings */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="rounded-full hover:bg-slate-100"
+              >
+                <Settings className="w-5 h-5 text-slate-600" />
+              </Button>
+
+              {/* User Menu */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className="flex items-center space-x-2 rounded-full hover:bg-slate-100"
+                  >
+                    <Avatar className="w-8 h-8 border-2 border-white shadow-sm">
+                      <AvatarFallback className="bg-gradient-to-br from-indigo-600 to-purple-600 text-white text-xs font-semibold">
+                        {user?.username?.substring(0, 2).toUpperCase() || "AD"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <ChevronDown className="w-4 h-4 text-slate-600" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => navigate("/profile")}>
+                    <Settings className="w-4 h-4 mr-2" />
+                    Profile Settings
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate("/")}>
+                    <Store className="w-4 h-4 mr-2" />
+                    View Store
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout} className="text-red-600">
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+        </header>
+
+        {/* Page Content */}
+        <main className="p-4 lg:p-8">
+          <div className="max-w-7xl mx-auto">{children}</div>
+        </main>
+      </div>
     </div>
   );
 };
