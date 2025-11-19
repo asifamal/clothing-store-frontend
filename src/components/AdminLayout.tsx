@@ -16,6 +16,7 @@ import {
   Settings,
   Bell,
   Store,
+  Star,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -42,6 +43,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     { icon: ShoppingCart, label: "Orders", path: "/admin-dashboard/orders" },
     { icon: Package, label: "Products", path: "/admin-dashboard/products" },
     { icon: FolderTree, label: "Categories", path: "/admin-dashboard/categories" },
+    { icon: Star, label: "Reviews", path: "/admin-dashboard/reviews" },
     { icon: Users, label: "Users", path: "/admin-dashboard/users" },
   ];
 

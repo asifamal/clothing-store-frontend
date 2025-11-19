@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Package, Eye, ArrowLeft, Download } from 'lucide-react'
+import { Package, Eye, ArrowLeft, Download, Star, X } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -8,14 +8,18 @@ import { useAuth } from '@/contexts/AuthContext'
 import { toast } from '@/hooks/use-toast'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
+import ReviewForm from '@/components/ReviewForm'
+import { createReview } from '@/lib/api'
 
 interface OrderItem {
   id: number
+  product_id: number
   product_name: string
   product_image?: string
   quantity: number
   price: string
   total: string
+  has_review?: boolean
 }
 
 interface Order {
@@ -39,6 +43,8 @@ const Orders: React.FC = () => {
   const navigate = useNavigate()
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
+  const [reviewingItem, setReviewingItem] = useState<{ orderId: number; orderItemId: number; productId: number } | null>(null)
+  const [reviewedItems, setReviewedItems] = useState<Set<number>>(new Set())
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -98,6 +104,34 @@ const Orders: React.FC = () => {
   const getStatusText = (status: string) => {
     if (status === 'pending') return 'Pending Confirmation'
     return status.charAt(0).toUpperCase() + status.slice(1)
+  }
+
+  const handleSubmitReview = async (data: { rating: number; title: string; comment: string }) => {
+    if (!tokens?.access || !reviewingItem) return
+
+    try {
+      await createReview(tokens.access, { 
+        ...data, 
+        product: reviewingItem.productId,
+        order_item: reviewingItem.orderItemId 
+      })
+      
+      // Mark this item as reviewed
+      setReviewedItems(prev => new Set(prev).add(reviewingItem.orderItemId))
+      
+      toast({
+        title: "✓ Thank you for your review!",
+        description: "Your review has been submitted successfully and is now visible.",
+      })
+      setReviewingItem(null)
+    } catch (error: any) {
+      console.error("Review submission error:", error)
+      toast({
+        title: "Error",
+        description: error.message || "Failed to submit review",
+        variant: "destructive",
+      })
+    }
   }
 
   if (loading) {
@@ -166,7 +200,7 @@ const Orders: React.FC = () => {
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="font-bold text-lg">${order.total_amount}</p>
+                      <p className="font-bold text-lg">₹{order.total_amount}</p>
                       <p className="text-sm text-gray-600">
                         {order.items.length} item{order.items.length !== 1 ? 's' : ''}
                       </p>
@@ -175,40 +209,34 @@ const Orders: React.FC = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    {/* Order Items Preview (show first 2 items) */}
+                    {/* Order Items Preview */}
                     <div className="space-y-2">
-                      {order.items.slice(0, 2).map((item) => (
-                        <div key={item.id} className="flex gap-3">
-                          <div className="w-12 h-12 bg-gray-200 rounded-md overflow-hidden">
-                            {item.product_image ? (
-                              <img 
-                                src={item.product_image} 
-                                alt={item.product_name}
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">
-                                <Package className="h-3 w-3" />
-                              </div>
-                            )}
+                      {order.items.map((item) => (
+                          <div key={item.id} className="flex gap-3 items-center">
+                            <div className="w-12 h-12 bg-gray-200 rounded-md overflow-hidden flex-shrink-0">
+                              {item.product_image ? (
+                                <img 
+                                  src={item.product_image} 
+                                  alt={item.product_name}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">
+                                  <Package className="h-3 h-3" />
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium truncate">{item.product_name}</p>
+                              <p className="text-sm text-gray-600">
+                                Qty: {item.quantity} × ₹{item.price}
+                              </p>
+                            </div>
+                            <div className="text-sm font-medium">
+                              ₹{item.total}
+                            </div>
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium truncate">{item.product_name}</p>
-                            <p className="text-sm text-gray-600">
-                              Qty: {item.quantity} × ${item.price}
-                            </p>
-                          </div>
-                          <div className="text-sm font-medium">
-                            ${item.total}
-                          </div>
-                        </div>
-                      ))}
-                      
-                      {order.items.length > 2 && (
-                        <p className="text-sm text-gray-600 pl-15">
-                          +{order.items.length - 2} more item{order.items.length - 2 !== 1 ? 's' : ''}
-                        </p>
-                      )}
+                        ))}
                     </div>
 
                     {/* Delivery Address */}
@@ -218,6 +246,32 @@ const Orders: React.FC = () => {
                         <p className="text-sm text-gray-600">
                           {order.address.street}, {order.address.city}, {order.address.state} {order.address.pincode}
                         </p>
+                      </div>
+                    )}
+
+                    {/* Review Form Section */}
+                    {reviewingItem && reviewingItem.orderId === order.id && (
+                      <div className="border-t pt-3">
+                        <div className="bg-accent/5 border-2 border-accent/50 rounded-lg p-4">
+                          <div className="flex items-center justify-between mb-3">
+                            <h4 className="font-semibold text-lg flex items-center gap-2">
+                              <Star className="w-5 h-5 text-accent" />
+                              Write Your Review
+                            </h4>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => setReviewingItem(null)}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                          <ReviewForm
+                            productId={reviewingItem.productId}
+                            onSubmit={handleSubmitReview}
+                            onCancel={() => setReviewingItem(null)}
+                          />
+                        </div>
                       </div>
                     )}
 
@@ -242,15 +296,38 @@ const Orders: React.FC = () => {
                           Invoice
                         </Button>
                       )}
-                      
-                      {order.status === 'delivered' && (
-                        <Button variant="outline" size="sm">
-                          Rate & Review
+
+                      {order.status.toLowerCase() === 'delivered' && !order.items.some(item => item.has_review || reviewedItems.has(item.id)) && (
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => {
+                            const firstItem = order.items[0]
+                            setReviewingItem({ 
+                              orderId: order.id, 
+                              orderItemId: firstItem.id,
+                              productId: firstItem.product_id 
+                            })
+                          }}
+                        >
+                          <Star className="mr-2 h-4 w-4" />
+                          Add Review
                         </Button>
                       )}
                       
                       {order.status === 'placed' && (
-                        <Button variant="destructive" size="sm">
+                        <Button 
+                          variant="destructive" 
+                          size="sm"
+                          onClick={() => {
+                            if (confirm('Are you sure you want to cancel this order?')) {
+                              toast({
+                                title: "Order Cancellation",
+                                description: "Order cancellation functionality coming soon",
+                              })
+                            }
+                          }}
+                        >
                           Cancel Order
                         </Button>
                       )}

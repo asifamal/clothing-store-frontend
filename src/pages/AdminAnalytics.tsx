@@ -105,7 +105,7 @@ const AdminAnalytics = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [access, orderStatus, productCategory, productSearch]);
 
-  const formatCurrency = (val: number) => `$${val.toLocaleString("en-US", { minimumFractionDigits: 2 })}`;
+  const formatCurrency = (val: number) => `₹${val.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`;
 
   const COLORS = ["#6366f1", "#8b5cf6", "#ec4899", "#f59e0b", "#10b981"];
 

@@ -3,8 +3,10 @@ import { ShoppingBag } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
+import StarRating from "./StarRating";
+import { getProductReviewStats } from "@/lib/api";
 
 interface ProductCardProps {
   name: string;
@@ -19,7 +21,24 @@ const ProductCard = ({ name, price, image, category, id = "1", stock = 0 }: Prod
   const { addToCart, loading } = useCart();
   const { isAuthenticated } = useAuth();
   const [addingToCart, setAddingToCart] = useState(false);
+  const [reviewStats, setReviewStats] = useState<{ average_rating: number; total_reviews: number } | null>(null);
   const isOutOfStock = stock === 0;
+
+  useEffect(() => {
+    const fetchReviewStats = async () => {
+      try {
+        const response = await getProductReviewStats(parseInt(id));
+        setReviewStats({
+          average_rating: response.data.average_rating,
+          total_reviews: response.data.total_reviews,
+        });
+      } catch (error) {
+        // Silently fail - reviews are optional
+      }
+    };
+
+    fetchReviewStats();
+  }, [id]);
 
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault(); // Prevent navigation to product page
@@ -83,7 +102,15 @@ const ProductCard = ({ name, price, image, category, id = "1", stock = 0 }: Prod
       <div className="space-y-1">
         <p className="text-xs text-muted-foreground uppercase tracking-wider">{category}</p>
         <h3 className="font-medium text-foreground">{name}</h3>
-        <p className="text-sm text-foreground font-medium">${price}</p>
+        <p className="text-sm text-foreground font-medium">₹{price}</p>
+        {reviewStats && reviewStats.total_reviews > 0 && (
+          <div className="flex items-center gap-1 pt-1">
+            <StarRating rating={reviewStats.average_rating} size="sm" />
+            <span className="text-xs text-muted-foreground">
+              ({reviewStats.total_reviews})
+            </span>
+          </div>
+        )}
       </div>
     </Link>
   );

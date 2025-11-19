@@ -213,7 +213,7 @@ const VerifyOTP: React.FC = () => {
                           {item.size && <span className="font-medium"> ({item.size})</span>}
                           {' '}x {item.quantity}
                         </span>
-                        <span>${(parseFloat(item.product.discounted_price || item.product.price) * item.quantity).toFixed(2)}</span>
+                        <span>₹{(parseFloat(item.product.discounted_price || item.product.price) * item.quantity).toFixed(2)}</span>
                       </div>
                     ))}
                     {items.length > 3 && (
@@ -223,7 +223,7 @@ const VerifyOTP: React.FC = () => {
                   <div className="border-t pt-2 mt-2">
                     <div className="flex justify-between font-semibold">
                       <span>Total:</span>
-                      <span>${getTotalPrice().toFixed(2)}</span>
+                      <span>₹{getTotalPrice().toFixed(2)}</span>
                     </div>
                   </div>
                 </div>

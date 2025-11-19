@@ -284,7 +284,7 @@ const Products = () => {
               </div>
               {(priceRange.min || priceRange.max) && (
                 <div className="mt-2 text-sm text-green-600 font-medium">
-                  Showing products: ${priceRange.min || '0'} - ${priceRange.max || '∞'}
+                  Showing products: ₹{priceRange.min || '0'} - ₹{priceRange.max || '∞'}
                 </div>
               )}
             </div>
@@ -405,7 +405,7 @@ const Products = () => {
                       {/* Price Range Filter */}
                       {(priceRange.min || priceRange.max) && (
                         <span className="inline-flex items-center gap-1 bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
-                          Price: ${priceRange.min || '0'} - ${priceRange.max || '∞'}
+                          Price: ₹{priceRange.min || '0'} - ₹{priceRange.max || '∞'}
                           <button
                             onClick={() => setPriceRange({ min: '', max: '' })}
                             className="ml-1 hover:text-green-600"

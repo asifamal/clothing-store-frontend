@@ -205,11 +205,11 @@ const Checkout: React.FC = () => {
                       <h4 className="font-medium">{item.product.name}</h4>
                       <p className="text-sm text-gray-600">
                         {item.size && <span className="font-medium">Size: {item.size} • </span>}
-                        ${price.toFixed(2)} × {item.quantity}
+                        ₹{price.toFixed(2)} × {item.quantity}
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="font-medium">${total.toFixed(2)}</p>
+                      <p className="font-medium">₹{total.toFixed(2)}</p>
                     </div>
                   </div>
                 )
@@ -219,7 +219,7 @@ const Checkout: React.FC = () => {
               
               <div className="flex justify-between items-center font-bold text-lg">
                 <span>Total:</span>
-                <span>${getTotalPrice().toFixed(2)}</span>
+                <span>₹{getTotalPrice().toFixed(2)}</span>
               </div>
             </CardContent>
           </Card>

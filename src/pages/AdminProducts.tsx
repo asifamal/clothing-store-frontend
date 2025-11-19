@@ -427,7 +427,7 @@ const AdminProducts = () => {
                     <h3 className="font-semibold text-slate-900 mb-1 line-clamp-1">{product.name}</h3>
                     <p className="text-xs text-slate-500">{product.category}</p>
                   </div>
-                  <p className="text-2xl font-bold text-indigo-600">${product.price.toFixed(2)}</p>
+                  <p className="text-2xl font-bold text-indigo-600">₹{product.price.toFixed(2)}</p>
                   
                   {/* Actions */}
                   <div className="flex gap-2 pt-2">
@@ -479,7 +479,7 @@ const AdminProducts = () => {
                     <tr key={product.id} className="hover:bg-slate-50 transition-colors">
                       <td className="px-6 py-4 text-sm font-medium text-slate-900">{product.name}</td>
                       <td className="px-6 py-4 text-sm text-slate-600">{product.category}</td>
-                      <td className="px-6 py-4 text-sm font-semibold text-slate-900">${product.price.toFixed(2)}</td>
+                      <td className="px-6 py-4 text-sm font-semibold text-slate-900">₹{product.price.toFixed(2)}</td>
                       <td className="px-6 py-4 text-sm">
                         <span
                           className={`px-3 py-1 rounded-full text-xs font-semibold ${

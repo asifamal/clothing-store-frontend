@@ -196,7 +196,7 @@ const OrderSuccess: React.FC = () => {
                         Quantity: {item.quantity}
                       </p>
                       <p className="text-sm text-gray-600">
-                        Price: ${item.price}
+                        Price: ₹{item.price}
                       </p>
                     </div>
                     <div className="text-right">

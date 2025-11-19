@@ -104,7 +104,7 @@ const OrderConfirmation: React.FC = () => {
                     <div key={item.id} className="flex justify-between text-sm">
                       <span>{item.product.name} x {item.quantity}</span>
                       <span className="font-medium">
-                        ${(parseFloat(item.product.discounted_price || item.product.price) * item.quantity).toFixed(2)}
+                        ₹{(parseFloat(item.product.discounted_price || item.product.price) * item.quantity).toFixed(2)}
                       </span>
                     </div>
                   ))}
@@ -114,7 +114,7 @@ const OrderConfirmation: React.FC = () => {
               <div className="border-t pt-4">
                 <div className="flex justify-between font-semibold text-lg">
                   <span>Total</span>
-                  <span>${getTotalPrice().toFixed(2)}</span>
+                  <span>₹{getTotalPrice().toFixed(2)}</span>
                 </div>
               </div>
 

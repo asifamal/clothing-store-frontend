@@ -1159,3 +1159,321 @@ export async function setDefaultAddress(accessToken: string, addressId: number) 
 
   return response.json();
 }
+
+// ========================================
+// REVIEWS API
+// ========================================
+
+export interface Review {
+  id: number;
+  product: number;
+  user: {
+    id: number;
+    username: string;
+  };
+  rating: number;
+  title: string;
+  comment: string;
+  verified_purchase: boolean;
+  is_approved: boolean;
+  helpful_count: number;
+  user_has_voted: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ReviewStats {
+  total_reviews: number;
+  average_rating: number;
+  rating_distribution: {
+    '5': number;
+    '4': number;
+    '3': number;
+    '2': number;
+    '1': number;
+  };
+  verified_purchases: number;
+}
+
+/**
+ * Get reviews for a product
+ */
+export async function getProductReviews(
+  productId: number,
+  params?: { rating?: number; verified_only?: boolean; page?: number }
+) {
+  const queryParams = new URLSearchParams();
+  queryParams.append('product', productId.toString());
+  
+  if (params?.rating) queryParams.append('rating', params.rating.toString());
+  if (params?.verified_only) queryParams.append('verified_only', 'true');
+  if (params?.page) queryParams.append('page', params.page.toString());
+
+  const response = await fetch(`${API_BASE_URL}/reviews/?${queryParams}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ message: 'Failed to fetch reviews' }));
+    throw new Error(err.message || 'Failed to fetch reviews');
+  }
+
+  return response.json();
+}
+
+/**
+ * Get review statistics for a product
+ */
+export async function getProductReviewStats(productId: number): Promise<{ data: ReviewStats }> {
+  const response = await fetch(`${API_BASE_URL}/reviews/product_stats/?product=${productId}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ message: 'Failed to fetch review stats' }));
+    throw new Error(err.message || 'Failed to fetch review stats');
+  }
+
+  const data = await response.json();
+  return { data };
+}
+
+/**
+ * Create a review
+ */
+export async function createReview(
+  accessToken: string,
+  reviewData: {
+    product: number;
+    rating: number;
+    title: string;
+    comment: string;
+    order_item?: number;
+  }
+) {
+  const response = await fetch(`${API_BASE_URL}/reviews/`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify(reviewData),
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ message: 'Failed to create review' }));
+    throw new Error(err.message || err.detail || 'Failed to create review');
+  }
+
+  return response.json();
+}
+
+/**
+ * Update a review
+ */
+export async function updateReview(
+  accessToken: string,
+  reviewId: number,
+  reviewData: {
+    rating: number;
+    title: string;
+    comment: string;
+  }
+) {
+  const response = await fetch(`${API_BASE_URL}/reviews/${reviewId}/`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify(reviewData),
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ message: 'Failed to update review' }));
+    throw new Error(err.message || 'Failed to update review');
+  }
+
+  return response.json();
+}
+
+/**
+ * Delete a review
+ */
+export async function deleteReview(accessToken: string, reviewId: number) {
+  const response = await fetch(`${API_BASE_URL}/reviews/${reviewId}/`, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ message: 'Failed to delete review' }));
+    throw new Error(err.message || 'Failed to delete review');
+  }
+
+  return response.status === 204 ? { success: true } : response.json();
+}
+
+/**
+ * Mark review as helpful
+ */
+export async function markReviewHelpful(accessToken: string, reviewId: number) {
+  const response = await fetch(`${API_BASE_URL}/reviews/${reviewId}/mark_helpful/`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ message: 'Failed to mark review as helpful' }));
+    throw new Error(err.message || 'Failed to mark review as helpful');
+  }
+
+  return response.json();
+}
+
+/**
+ * Get user's reviews
+ */
+export async function getMyReviews(accessToken: string) {
+  const response = await fetch(`${API_BASE_URL}/reviews/my_reviews/`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ message: 'Failed to fetch your reviews' }));
+    throw new Error(err.message || 'Failed to fetch your reviews');
+  }
+
+  return response.json();
+}
+
+// ========================================
+// ADMIN REVIEWS API
+// ========================================
+
+/**
+ * Get all reviews (admin)
+ */
+export async function adminGetReviews(
+  accessToken: string,
+  params?: { is_approved?: boolean; rating?: number; search?: string; page?: number }
+) {
+  const queryParams = new URLSearchParams();
+  
+  if (params?.is_approved !== undefined) queryParams.append('is_approved', params.is_approved.toString());
+  if (params?.rating) queryParams.append('rating', params.rating.toString());
+  if (params?.search) queryParams.append('search', params.search);
+  if (params?.page) queryParams.append('page', params.page.toString());
+
+  const response = await fetch(`${API_BASE_URL}/admin/reviews/?${queryParams}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ message: 'Failed to fetch reviews' }));
+    throw new Error(err.message || 'Failed to fetch reviews');
+  }
+
+  return response.json();
+}
+
+/**
+ * Approve review (admin)
+ */
+export async function adminApproveReview(accessToken: string, reviewId: number) {
+  const response = await fetch(`${API_BASE_URL}/admin/reviews/${reviewId}/approve/`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ message: 'Failed to approve review' }));
+    throw new Error(err.message || 'Failed to approve review');
+  }
+
+  return response.json();
+}
+
+/**
+ * Reject review (admin)
+ */
+export async function adminRejectReview(accessToken: string, reviewId: number) {
+  const response = await fetch(`${API_BASE_URL}/admin/reviews/${reviewId}/reject/`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ message: 'Failed to reject review' }));
+    throw new Error(err.message || 'Failed to reject review');
+  }
+
+  return response.json();
+}
+
+/**
+ * Delete review (admin)
+ */
+export async function adminDeleteReview(accessToken: string, reviewId: number) {
+  const response = await fetch(`${API_BASE_URL}/admin/reviews/${reviewId}/`, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ message: 'Failed to delete review' }));
+    throw new Error(err.message || 'Failed to delete review');
+  }
+
+  return response.status === 204 ? { success: true } : response.json();
+}
+
+/**
+ * Get review statistics (admin)
+ */
+export async function adminGetReviewStatistics(accessToken: string) {
+  const response = await fetch(`${API_BASE_URL}/admin/reviews/statistics/`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ message: 'Failed to fetch statistics' }));
+    throw new Error(err.message || 'Failed to fetch statistics');
+  }
+
+  return response.json();
+}
+

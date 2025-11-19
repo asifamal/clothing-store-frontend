@@ -141,7 +141,7 @@ const AdminOrders = () => {
     }
   };
 
-  const formatCurrency = (val: number) => `$${val.toLocaleString("en-US", { minimumFractionDigits: 2 })}`;
+  const formatCurrency = (val: number) => `₹${val.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`;
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -390,7 +390,7 @@ const AdminOrders = () => {
                 <Card className="border-0 shadow-md bg-gradient-to-br from-indigo-50 to-purple-50">
                   <CardContent className="p-4">
                     <p className="text-xs font-medium text-indigo-700 mb-1">Total Amount</p>
-                    <p className="text-2xl font-bold text-indigo-900">${orderDetail.total_amount.toFixed(2)}</p>
+                    <p className="text-2xl font-bold text-indigo-900">₹{orderDetail.total_amount.toFixed(2)}</p>
                   </CardContent>
                 </Card>
                 <Card className="border-0 shadow-md bg-gradient-to-br from-blue-50 to-indigo-50">
@@ -472,8 +472,8 @@ const AdminOrders = () => {
                           <p className="text-xs text-slate-600">Quantity: {item.quantity}</p>
                         </div>
                         <div className="text-right shrink-0">
-                          <p className="text-sm font-semibold text-slate-900">${item.price.toFixed(2)} each</p>
-                          <p className="text-xs text-slate-600">Total: ${item.total.toFixed(2)}</p>
+                          <p className="text-sm font-semibold text-slate-900">₹{item.price.toFixed(2)} each</p>
+                          <p className="text-xs text-slate-600">Total: ₹{item.total.toFixed(2)}</p>
                         </div>
                       </div>
                     ))}

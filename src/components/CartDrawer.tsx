@@ -105,7 +105,7 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
             <div className="p-4 bg-white border-t sticky bottom-0">
               <div className="flex justify-between items-center mb-4">
                 <span className="font-semibold">Total:</span>
-                <span className="font-bold text-lg">${getTotalPrice().toFixed(2)}</span>
+                <span className="font-bold text-lg">₹{getTotalPrice().toFixed(2)}</span>
               </div>
               <Button 
                 onClick={handleCheckout}
@@ -167,7 +167,7 @@ const CartItemRow: React.FC<CartItemRowProps> = ({ item, onUpdateQuantity, onRem
       {/* Product Details */}
       <div className="flex-1 min-w-0">
         <h4 className="font-medium text-sm truncate">{item.product.name}</h4>
-        <p className="text-sm text-gray-600">${price.toFixed(2)}</p>
+        <p className="text-sm text-gray-600">₹{price.toFixed(2)}</p>
         
         {/* Quantity Controls */}
         <div className="flex items-center gap-2 mt-2">
@@ -209,7 +209,7 @@ const CartItemRow: React.FC<CartItemRowProps> = ({ item, onUpdateQuantity, onRem
 
       {/* Total Price */}
       <div className="text-sm font-medium">
-        ${totalPrice.toFixed(2)}
+        ₹{totalPrice.toFixed(2)}
       </div>
     </div>
   )

@@ -178,7 +178,7 @@ const Product = () => {
                 {product.category?.name || "Uncategorized"}
               </p>
               <h1 className="text-4xl font-serif font-bold mb-4">{product.name}</h1>
-              <p className="text-3xl font-medium">${product.price}</p>
+              <p className="text-3xl font-medium">₹{product.price}</p>
             </div>
 
             <p className="text-muted-foreground leading-relaxed">{product.description}</p>
@@ -280,30 +280,28 @@ const Product = () => {
             </div>
 
             {/* Product Details */}
-            <div className="border-t border-border pt-6 space-y-2">
-              <h3 className="font-medium mb-3">Product Details</h3>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li className="flex items-start">
-                  <span className="mr-2">•</span>
-                  <span>Product ID: #{product.id}</span>
-                </li>
-                {product.category && (
-                  <li className="flex items-start">
-                    <span className="mr-2">•</span>
-                    <span>Category: {product.category.name}</span>
-                  </li>
-                )}
-                <li className="flex items-start">
-                  <span className="mr-2">•</span>
-                  <span>Price: ${product.price}</span>
-                </li>
-                {product.attributes && product.attributes.length > 0 && product.attributes.map((attr, index) => (
-                  <li key={index} className="flex items-start">
-                    <span className="mr-2">•</span>
-                    <span>{attr.name}: {attr.value}</span>
-                  </li>
-                ))}
-              </ul>
+            <div className="border-t border-border pt-8 space-y-4">
+              <div>
+                <h3 className="font-semibold text-sm uppercase tracking-wide mb-3">Product Details</h3>
+                <div className="space-y-2 text-sm text-muted-foreground">
+                  {product.category && (
+                    <div className="flex justify-between py-2 border-b">
+                      <span className="font-medium text-foreground">Category</span>
+                      <span>{product.category.name}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between py-2 border-b">
+                    <span className="font-medium text-foreground">Product ID</span>
+                    <span>#{product.id}</span>
+                  </div>
+                  {product.attributes && product.attributes.length > 0 && product.attributes.map((attr, index) => (
+                    <div key={index} className="flex justify-between py-2 border-b">
+                      <span className="font-medium text-foreground">{attr.name}</span>
+                      <span>{attr.value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         </div>
