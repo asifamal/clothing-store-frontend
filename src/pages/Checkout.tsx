@@ -13,6 +13,7 @@ import { toast } from '@/hooks/use-toast'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import { getUserAddresses } from '@/lib/api'
+import { MapPin, Phone, ShieldCheck, CreditCard } from 'lucide-react'
 
 interface Address {
   id: number
@@ -26,7 +27,7 @@ interface Address {
 }
 
 const Checkout: React.FC = () => {
-  const { items, loading: cartLoading, clearCart, getTotalPrice } = useCart()
+  const { items, loading: cartLoading, getTotalPrice } = useCart()
   const { tokens, user } = useAuth()
   const navigate = useNavigate()
   
@@ -151,212 +152,213 @@ const Checkout: React.FC = () => {
 
   if (cartLoading || addressesLoading) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background flex flex-col">
         <Header />
-        <div className="container mx-auto px-4 py-8">
-          <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-            <p className="ml-3">Loading checkout...</p>
-          </div>
-        </div>
+        <main className="flex-1 container mx-auto px-4 py-12 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </main>
         <Footer />
       </div>
     )
   }
 
   if (items.length === 0) {
-    return null // Will redirect in useEffect
+    return null
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <Header />
       
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-2xl font-bold mb-8">Checkout</h1>
+      <main className="flex-1 container mx-auto px-6 py-12">
+        <h1 className="text-3xl font-serif font-bold mb-8">Checkout</h1>
         
-        <div className="grid lg:grid-cols-2 gap-8">
-          {/* Order Summary */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Order Summary</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {items.map((item) => {
-                const price = parseFloat(item.product.discounted_price || item.product.price)
-                const total = price * item.quantity
-                
-                return (
-                  <div key={item.id} className="flex gap-3">
-                    <div className="w-16 h-16 bg-gray-200 rounded-md overflow-hidden">
-                      {item.product.image ? (
-                        <img 
-                          src={item.product.image} 
-                          alt={item.product.name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">
-                          No Image
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="font-medium">{item.product.name}</h4>
-                      <p className="text-sm text-gray-600">
-                        {item.size && <span className="font-medium">Size: {item.size} • </span>}
-                        ₹{price.toFixed(2)} × {item.quantity}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-medium">₹{total.toFixed(2)}</p>
-                    </div>
-                  </div>
-                )
-              })}
+        <div className="grid lg:grid-cols-12 gap-12">
+          {/* Left Column: Address & Details */}
+          <div className="lg:col-span-7 space-y-8">
+            {/* Delivery Address */}
+            <section>
+              <h2 className="text-lg font-medium mb-4 flex items-center gap-2">
+                <MapPin className="h-5 w-5" /> Delivery Address
+              </h2>
               
-              <Separator />
-              
-              <div className="flex justify-between items-center font-bold text-lg">
-                <span>Total:</span>
-                <span>₹{getTotalPrice().toFixed(2)}</span>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Delivery Address */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Delivery Address</CardTitle>
-            </CardHeader>
-            <CardContent>
               {addresses.length === 0 ? (
-                <div className="text-center py-8">
-                  <p className="text-gray-500 mb-4">No addresses found</p>
+                <div className="text-center py-8 border rounded-lg bg-secondary/10">
+                  <p className="text-muted-foreground mb-4">No addresses found</p>
                   <Button onClick={() => navigate('/profile')}>
                     Add Address
                   </Button>
                 </div>
               ) : (
-                <RadioGroup value={selectedAddress} onValueChange={setSelectedAddress}>
-                  <div className="space-y-3">
-                    {addresses.map((address) => (
-                      <div key={address.id} className="flex items-start space-x-2 p-3 border rounded-lg">
-                        <RadioGroupItem value={address.id.toString()} id={`address-${address.id}`} className="mt-1" />
-                        <Label htmlFor={`address-${address.id}`} className="flex-1 cursor-pointer">
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2">
-                              <Badge variant={address.is_default ? "default" : "secondary"}>
-                                {address.address_type}
-                              </Badge>
-                              {address.is_default && (
-                                <Badge variant="outline">Default</Badge>
-                              )}
-                            </div>
-                            <p className="font-medium">{address.street}</p>
-                            <p className="text-sm text-gray-600">
-                              {address.city}, {address.state} {address.pincode}
-                            </p>
-                            <p className="text-sm text-gray-600">{address.country}</p>
+                <RadioGroup value={selectedAddress} onValueChange={setSelectedAddress} className="space-y-4">
+                  {addresses.map((address) => (
+                    <div key={address.id} className="relative">
+                      <RadioGroupItem value={address.id.toString()} id={`address-${address.id}`} className="peer sr-only" />
+                      <Label 
+                        htmlFor={`address-${address.id}`} 
+                        className="flex items-start p-4 border rounded-lg cursor-pointer transition-all hover:border-primary/50 peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-secondary/10"
+                      >
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-medium">{address.address_type}</span>
+                            {address.is_default && (
+                              <Badge variant="secondary" className="text-xs">Default</Badge>
+                            )}
                           </div>
-                        </Label>
-                      </div>
-                    ))}
-                  </div>
+                          <p className="text-sm text-muted-foreground">{address.street}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {address.city}, {address.state} {address.pincode}
+                          </p>
+                          <p className="text-sm text-muted-foreground">{address.country}</p>
+                        </div>
+                        <div className="h-4 w-4 border rounded-full border-primary opacity-0 peer-data-[state=checked]:opacity-100 flex items-center justify-center">
+                          <div className="h-2 w-2 bg-primary rounded-full" />
+                        </div>
+                      </Label>
+                    </div>
+                  ))}
                 </RadioGroup>
               )}
               
-              <div className="mt-4">
-                <Button 
-                  variant="outline" 
-                  onClick={() => navigate('/profile')}
-                  className="w-full"
-                >
-                  Manage Addresses
-                </Button>
-              </div>
+              <Button 
+                variant="link" 
+                onClick={() => navigate('/profile')}
+                className="mt-2 px-0"
+              >
+                + Add or Manage Addresses
+              </Button>
+            </section>
+
+            <Separator />
+            
+            {/* Contact Phone */}
+            <section>
+              <h2 className="text-lg font-medium mb-4 flex items-center gap-2">
+                <Phone className="h-5 w-5" /> Contact Information
+              </h2>
               
-              {/* Contact Phone Section */}
-              <div className="mt-6 border-t pt-6">
-                <div className="mb-4">
-                  <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
-                    <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                    </svg>
-                    Contact Number for Delivery
-                  </h3>
-                  <p className="text-sm text-gray-500 mt-1">We'll use this number to contact you about your delivery</p>
+              <div className="space-y-4">
+                <div 
+                  className={`p-4 border rounded-lg cursor-pointer transition-all ${useProfilePhone ? 'border-primary bg-secondary/10' : 'hover:border-primary/50'}`}
+                  onClick={() => setUseProfilePhone(true)}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${useProfilePhone ? 'border-primary' : 'border-muted-foreground'}`}>
+                      {useProfilePhone && <div className="w-2 h-2 rounded-full bg-primary" />}
+                    </div>
+                    <div>
+                      <p className="font-medium">Use Profile Phone Number</p>
+                      <p className="text-sm text-muted-foreground font-mono mt-1">
+                        {user?.phone_number || 'Not set - Please add phone in profile'}</p>
+                    </div>
+                  </div>
                 </div>
                 
-                <div className="space-y-3">
-                  <label className="flex items-start p-4 border-2 rounded-lg cursor-pointer transition-all hover:border-blue-300 hover:bg-blue-50/50" 
-                         style={{ borderColor: useProfilePhone ? '#3b82f6' : '#e5e7eb', backgroundColor: useProfilePhone ? '#eff6ff' : 'white' }}>
-                    <input
-                      type="radio"
-                      checked={useProfilePhone}
-                      onChange={() => setUseProfilePhone(true)}
-                      className="mt-1 cursor-pointer"
-                    />
-                    <div className="ml-3 flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium text-gray-900">Profile Phone Number</span>
-                        <Badge variant="secondary" className="text-xs">Recommended</Badge>
-                      </div>
-                      <p className="text-sm text-gray-600 mt-1 font-mono">{user?.phone_number || 'Not set - Please add phone in profile'}</p>
+                <div 
+                  className={`p-4 border rounded-lg cursor-pointer transition-all ${!useProfilePhone ? 'border-primary bg-secondary/10' : 'hover:border-primary/50'}`}
+                  onClick={() => setUseProfilePhone(false)}
+                >
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${!useProfilePhone ? 'border-primary' : 'border-muted-foreground'}`}>
+                      {!useProfilePhone && <div className="w-2 h-2 rounded-full bg-primary" />}
                     </div>
-                  </label>
-                  
-                  <label className="flex items-start p-4 border-2 rounded-lg cursor-pointer transition-all hover:border-blue-300 hover:bg-blue-50/50"
-                         style={{ borderColor: !useProfilePhone ? '#3b82f6' : '#e5e7eb', backgroundColor: !useProfilePhone ? '#eff6ff' : 'white' }}>
-                    <input
-                      type="radio"
-                      checked={!useProfilePhone}
-                      onChange={() => setUseProfilePhone(false)}
-                      className="mt-1 cursor-pointer"
-                    />
-                    <div className="ml-3 flex-1">
-                      <span className="font-medium text-gray-900">Use Different Number</span>
-                      <p className="text-sm text-gray-500 mt-1">Enter an alternate contact number</p>
+                    <div>
+                      <p className="font-medium">Use Different Number</p>
                     </div>
-                  </label>
+                  </div>
                   
                   {!useProfilePhone && (
-                    <div className="ml-7 mt-3 animate-in slide-in-from-top-2 duration-200">
+                    <div className="ml-7">
                       <Input
                         type="tel"
                         placeholder="Enter phone number (e.g., +1234567890)"
                         value={contactPhone}
                         onChange={(e) => setContactPhone(e.target.value)}
-                        className="border-2 focus:border-blue-500 transition-colors"
+                        className="max-w-xs"
                       />
                     </div>
                   )}
                 </div>
               </div>
-              
-              <div className="mt-6">
-                <Button 
-                  onClick={handlePlaceOrder}
-                  disabled={loading || !selectedAddress || addresses.length === 0}
-                  className="w-full h-12 text-base font-semibold"
-                >
-                  {loading ? (
-                    <span className="flex items-center gap-2">
-                      <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Processing...
-                    </span>
-                  ) : (
-                    'Proceed to Payment Verification'
-                  )}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+            </section>
+          </div>
+
+          {/* Right Column: Order Summary */}
+          <div className="lg:col-span-5">
+            <div className="sticky top-24">
+              <Card className="border-none shadow-lg bg-secondary/10">
+                <CardHeader>
+                  <CardTitle className="font-serif">Order Summary</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2">
+                    {items.map((item) => {
+                      const price = parseFloat(item.product.discounted_price || item.product.price)
+                      
+                      return (
+                        <div key={item.id} className="flex gap-4">
+                          <div className="w-16 h-20 bg-background rounded-sm overflow-hidden flex-shrink-0">
+                            {item.product.image ? (
+                              <img 
+                                src={item.product.image} 
+                                alt={item.product.name}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">
+                                No Image
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-medium text-sm line-clamp-2">{item.product.name}</h4>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              {item.size && <span>Size: {item.size} • </span>}
+                              Qty: {item.quantity}
+                            </p>
+                            <p className="text-sm font-medium mt-1">₹{(price * item.quantity).toFixed(2)}</p>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                  
+                  <Separator />
+                  
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Subtotal</span>
+                      <span>₹{getTotalPrice().toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Shipping</span>
+                      <span className="text-green-600 font-medium">Free</span>
+                    </div>
+                    <Separator className="my-2" />
+                    <div className="flex justify-between font-serif font-bold text-xl">
+                      <span>Total</span>
+                      <span>₹{getTotalPrice().toFixed(2)}</span>
+                    </div>
+                  </div>
+
+                  <Button 
+                    onClick={handlePlaceOrder}
+                    disabled={loading || !selectedAddress || addresses.length === 0}
+                    className="w-full h-12 text-base uppercase tracking-wide"
+                  >
+                    {loading ? "Processing..." : "Proceed to Payment"}
+                  </Button>
+
+                  <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+                    <ShieldCheck className="h-4 w-4" />
+                    Secure Checkout
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
         </div>
-      </div>
+      </main>
       
       <Footer />
     </div>

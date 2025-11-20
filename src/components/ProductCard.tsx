@@ -1,12 +1,12 @@
 import { Button } from "@/components/ui/button";
-import { ShoppingBag } from "lucide-react";
+import { ShoppingBag, Star } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState, useEffect } from "react";
 import { toast } from "@/hooks/use-toast";
-import StarRating from "./StarRating";
 import { getProductReviewStats } from "@/lib/api";
+import { cn } from "@/lib/utils";
 
 interface ProductCardProps {
   name: string;
@@ -33,7 +33,7 @@ const ProductCard = ({ name, price, image, category, id = "1", stock = 0 }: Prod
           total_reviews: response.data.total_reviews,
         });
       } catch (error) {
-        // Silently fail - reviews are optional
+        // Silently fail
       }
     };
 
@@ -41,7 +41,7 @@ const ProductCard = ({ name, price, image, category, id = "1", stock = 0 }: Prod
   }, [id]);
 
   const handleAddToCart = async (e: React.MouseEvent) => {
-    e.preventDefault(); // Prevent navigation to product page
+    e.preventDefault();
     e.stopPropagation();
 
     if (!isAuthenticated) {
@@ -50,7 +50,6 @@ const ProductCard = ({ name, price, image, category, id = "1", stock = 0 }: Prod
         description: "Please login to add items to your cart",
         variant: "destructive"
       });
-      // Redirect to login page after a short delay
       setTimeout(() => {
         window.location.href = '/login';
       }, 1000);
@@ -77,40 +76,61 @@ const ProductCard = ({ name, price, image, category, id = "1", stock = 0 }: Prod
 
   return (
     <Link to={`/product/${id}`} className="group cursor-pointer block">
-      <div className="relative aspect-[4/5] sm:aspect-[3/4] overflow-hidden rounded-sm bg-muted mb-4">
+      <div className="relative aspect-[3/4] overflow-hidden bg-secondary/20 mb-4">
         <img 
           src={image} 
           alt={name}
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
         />
-        <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/10 transition-colors duration-300" />
-        {isOutOfStock ? (
-          <div className="absolute bottom-4 right-4 bg-destructive text-destructive-foreground px-3 py-2 rounded-sm text-sm font-medium">
-            Out of Stock
+        
+        {/* Overlay Gradient */}
+        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
+        
+        {/* Tags/Badges */}
+        <div className="absolute top-3 left-3 flex flex-col gap-2">
+          {isOutOfStock && (
+            <span className="bg-white/90 backdrop-blur text-black text-[10px] font-bold px-2 py-1 uppercase tracking-wider">
+              Sold Out
+            </span>
+          )}
+          {!isOutOfStock && reviewStats && reviewStats.average_rating >= 4.5 && (
+            <span className="bg-white/90 backdrop-blur text-black text-[10px] font-bold px-2 py-1 uppercase tracking-wider">
+              Best Seller
+            </span>
+          )}
+        </div>
+
+        {/* Quick Add Button */}
+        {!isOutOfStock && (
+          <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+            <Button 
+              className="w-full bg-white text-black hover:bg-white/90 shadow-lg"
+              onClick={handleAddToCart}
+              disabled={loading || addingToCart}
+            >
+              {addingToCart ? "Adding..." : "Quick Add"}
+            </Button>
           </div>
-        ) : (
-          <Button 
-            size="icon"
-            className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-            onClick={handleAddToCart}
-            disabled={loading || addingToCart}
-          >
-            <ShoppingBag className="h-4 w-4" />
-          </Button>
         )}
       </div>
+
       <div className="space-y-1">
-        <p className="text-xs text-muted-foreground uppercase tracking-wider">{category}</p>
-        <h3 className="font-medium text-foreground">{name}</h3>
-        <p className="text-sm text-foreground font-medium">₹{price}</p>
-        {reviewStats && reviewStats.total_reviews > 0 && (
-          <div className="flex items-center gap-1 pt-1">
-            <StarRating rating={reviewStats.average_rating} size="sm" />
-            <span className="text-xs text-muted-foreground">
-              ({reviewStats.total_reviews})
-            </span>
-          </div>
-        )}
+        <div className="flex justify-between items-start">
+          <h3 className="font-serif text-lg text-foreground group-hover:underline decoration-1 underline-offset-4 transition-all">
+            {name}
+          </h3>
+          <span className="font-medium text-foreground">₹{price}</span>
+        </div>
+        
+        <div className="flex justify-between items-center">
+          <p className="text-xs text-muted-foreground uppercase tracking-wider">{category}</p>
+          {reviewStats && reviewStats.total_reviews > 0 && (
+            <div className="flex items-center gap-1">
+              <Star className="h-3 w-3 fill-black text-black" />
+              <span className="text-xs font-medium">{reviewStats.average_rating.toFixed(1)}</span>
+            </div>
+          )}
+        </div>
       </div>
     </Link>
   );

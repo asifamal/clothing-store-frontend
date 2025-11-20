@@ -1,8 +1,8 @@
-import { Menu, Search, User, LogOut, X, Package } from "lucide-react";
+import { Menu, Search, User, LogOut, X, Package, ShoppingBag, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import CartIcon from "./CartIcon";
 import CartDrawer from "./CartDrawer";
 import {
@@ -12,6 +12,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+  SheetClose
+} from "@/components/ui/sheet";
+import { cn } from "@/lib/utils";
 
 const Header = () => {
   const { isAuthenticated, user, logout } = useAuth();
@@ -19,6 +28,15 @@ const Header = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [cartOpen, setCartOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -34,103 +52,178 @@ const Header = () => {
     }
   };
 
+  const navLinks = [
+    { name: "Home", path: "/" },
+    { name: "Shop", path: "/products" },
+    { name: "New Arrivals", path: "/products?category=new" },
+  ];
+
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-      <div className="container mx-auto flex h-16 items-center justify-between px-4">
-        <Button variant="ghost" size="icon" className="md:hidden">
-          <Menu className="h-5 w-5" />
-        </Button>
+    <>
+      <header 
+        className={cn(
+          "fixed top-0 z-50 w-full transition-all duration-300 border-b border-transparent",
+          scrolled ? "bg-background/80 backdrop-blur-md border-border py-2" : "bg-transparent py-4"
+        )}
+      >
+        <div className="container mx-auto flex items-center justify-between px-6">
+          {/* Mobile Menu */}
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="md:hidden">
+                <Menu className="h-6 w-6" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-[300px] sm:w-[400px] p-0">
+              <SheetHeader className="p-6 border-b text-left">
+                <SheetTitle className="font-serif text-2xl font-bold">NOTED.</SheetTitle>
+              </SheetHeader>
+              <div className="flex flex-col py-6">
+                {navLinks.map((link) => (
+                  <SheetClose asChild key={link.path}>
+                    <Link 
+                      to={link.path}
+                      className="px-6 py-4 text-lg font-medium hover:bg-secondary/50 transition-colors flex items-center justify-between group"
+                    >
+                      {link.name}
+                      <ChevronRight className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground" />
+                    </Link>
+                  </SheetClose>
+                ))}
+                {isAuthenticated && (
+                  <>
+                    <div className="h-px bg-border my-2 mx-6" />
+                    <SheetClose asChild>
+                      <Link 
+                        to="/profile"
+                        className="px-6 py-4 text-lg font-medium hover:bg-secondary/50 transition-colors flex items-center justify-between group"
+                      >
+                        Profile
+                        <User className="h-4 w-4 text-muted-foreground" />
+                      </Link>
+                    </SheetClose>
+                    <SheetClose asChild>
+                      <Link 
+                        to="/orders"
+                        className="px-6 py-4 text-lg font-medium hover:bg-secondary/50 transition-colors flex items-center justify-between group"
+                      >
+                        Orders
+                        <Package className="h-4 w-4 text-muted-foreground" />
+                      </Link>
+                    </SheetClose>
+                    <button 
+                      onClick={handleLogout}
+                      className="px-6 py-4 text-lg font-medium hover:bg-red-50 text-red-600 transition-colors flex items-center justify-between text-left w-full"
+                    >
+                      Logout
+                      <LogOut className="h-4 w-4" />
+                    </button>
+                  </>
+                )}
+                {!isAuthenticated && (
+                  <div className="p-6 mt-4">
+                    <SheetClose asChild>
+                      <Button className="w-full h-11 text-base" onClick={() => navigate('/login')}>
+                        Sign In
+                      </Button>
+                    </SheetClose>
+                  </div>
+                )}
+              </div>
+            </SheetContent>
+          </Sheet>
 
-        <nav className="hidden md:flex items-center space-x-8">
-          <Link to="/" className="text-sm font-medium text-foreground hover:text-accent transition-colors">
-            Home
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex items-center space-x-8">
+            {navLinks.map((link) => (
+              <Link 
+                key={link.path}
+                to={link.path} 
+                className="text-sm font-medium tracking-wide hover:text-muted-foreground transition-colors uppercase"
+              >
+                {link.name}
+              </Link>
+            ))}
+          </nav>
+
+          {/* Logo */}
+          <Link to="/" className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+            <span className="text-2xl md:text-3xl font-serif font-bold tracking-tighter">
+              NOTED.
+            </span>
           </Link>
-          <Link to="/products" className="text-sm font-medium text-foreground hover:text-accent transition-colors">
-            All Products
-          </Link>
-          <a href="#" className="text-sm font-medium text-foreground hover:text-accent transition-colors">
-            New Arrivals
-          </a>
-          <a href="#" className="text-sm font-medium text-foreground hover:text-accent transition-colors">
-            Categories
-          </a>
-        </nav>
 
-        <Link to="/" className="text-2xl font-serif font-bold tracking-tight mx-auto">
-          NOTED STORE
-        </Link>
-
-        <div className="flex items-center space-x-4">
-          {searchOpen ? (
-            <form onSubmit={handleSearch} className="flex items-center gap-2">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search products..."
-                className="w-48 px-3 py-1 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-accent"
-                autoFocus
-              />
-              <Button type="submit" variant="ghost" size="icon">
+          {/* Right Actions */}
+          <div className="flex items-center space-x-2 md:space-x-4">
+            {searchOpen ? (
+              <div className="absolute inset-0 bg-background z-50 flex items-center justify-center px-4 animate-in fade-in slide-in-from-top-2">
+                <form onSubmit={handleSearch} className="w-full max-w-2xl flex items-center gap-4">
+                  <Search className="h-5 w-5 text-muted-foreground" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search for products..."
+                    className="flex-1 bg-transparent border-none text-lg focus:outline-none placeholder:text-muted-foreground/50"
+                    autoFocus
+                  />
+                  <Button type="button" variant="ghost" size="icon" onClick={() => setSearchOpen(false)}>
+                    <X className="h-6 w-6" />
+                  </Button>
+                </form>
+              </div>
+            ) : (
+              <Button variant="ghost" size="icon" onClick={() => setSearchOpen(true)} className="hover:bg-transparent">
                 <Search className="h-5 w-5" />
               </Button>
-              <Button type="button" variant="ghost" size="icon" onClick={() => setSearchOpen(false)}>
-                <X className="h-5 w-5" />
-              </Button>
-            </form>
-          ) : (
-            <Button variant="ghost" size="icon" onClick={() => setSearchOpen(true)}>
-              <Search className="h-5 w-5" />
-            </Button>
-          )}
-          
-          {isAuthenticated && user ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" title={`Logged in as ${user.username}`}>
+            )}
+            
+            {isAuthenticated && user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="hover:bg-transparent hidden md:flex">
+                    <User className="h-5 w-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <div className="px-2 py-1.5 text-sm font-medium text-muted-foreground">
+                    Signed in as <span className="text-foreground">{user.username}</span>
+                  </div>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link to="/profile" className="cursor-pointer">
+                      <User className="mr-2 h-4 w-4" /> Profile
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/orders" className="cursor-pointer">
+                      <Package className="mr-2 h-4 w-4" /> Orders
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-destructive focus:text-destructive">
+                    <LogOut className="mr-2 h-4 w-4" /> Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Link to="/login" className="hidden md:block">
+                <Button variant="ghost" size="icon" className="hover:bg-transparent">
                   <User className="h-5 w-5" />
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <div className="px-2 py-1.5 text-sm font-medium">
-                  {user.username}
-                </div>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link to="/profile" className="cursor-pointer">
-                    <User className="mr-2 h-4 w-4" />
-                    Profile
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/orders" className="cursor-pointer">
-                    <Package className="mr-2 h-4 w-4" />
-                    My Orders
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Logout
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (
-            <Link to="/login">
-              <Button variant="ghost" size="icon">
-                <User className="h-5 w-5" />
-              </Button>
-            </Link>
-          )}
+              </Link>
+            )}
 
-          <CartIcon onClick={() => setCartOpen(true)} />
+            <CartIcon onClick={() => setCartOpen(true)} />
+          </div>
         </div>
-      </div>
+      </header>
       
       <CartDrawer 
         isOpen={cartOpen} 
         onClose={() => setCartOpen(false)} 
       />
-    </header>
+    </>
   );
 };
 

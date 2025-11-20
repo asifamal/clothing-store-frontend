@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { CheckCircle, Package, ArrowRight, FileText, Download } from 'lucide-react'
+import { CheckCircle, Package, ArrowRight, FileText, Download, ShoppingBag, MapPin, Calendar } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Separator } from "@/components/ui/separator"
 import { useAuth } from '@/contexts/AuthContext'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
@@ -78,182 +79,172 @@ const OrderSuccess: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background flex flex-col">
         <Header />
-        <div className="container mx-auto px-4 py-8">
-          <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-            <p className="ml-3">Loading order details...</p>
-          </div>
-        </div>
+        <main className="flex-1 container mx-auto px-4 py-12 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </main>
         <Footer />
       </div>
     )
   }
 
   if (!order) {
-    navigate('/')
     return null
   }
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'pending': return 'bg-yellow-100 text-yellow-800'
-      case 'confirmed': return 'bg-green-100 text-green-800'
-      case 'dispatched': return 'bg-orange-100 text-orange-800'
-      case 'delivered': return 'bg-green-100 text-green-800'
-      case 'cancelled': return 'bg-red-100 text-red-800'
-      default: return 'bg-gray-100 text-gray-800'
+      case 'pending': return 'bg-yellow-100 text-yellow-800 border-yellow-200'
+      case 'confirmed': return 'bg-green-100 text-green-800 border-green-200'
+      case 'dispatched': return 'bg-orange-100 text-orange-800 border-orange-200'
+      case 'delivered': return 'bg-green-100 text-green-800 border-green-200'
+      case 'cancelled': return 'bg-red-100 text-red-800 border-red-200'
+      default: return 'bg-secondary text-secondary-foreground'
     }
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <Header />
       
-      <div className="container mx-auto px-4 py-8">
-        {/* Success Header */}
-        <div className="text-center mb-8">
-          <CheckCircle className="mx-auto h-16 w-16 text-green-500 mb-4" />
-          <h1 className="text-3xl font-bold text-green-600 mb-2">Order Placed Successfully!</h1>
-          <p className="text-gray-600">
-            Thank you for your order. We'll send you shipping confirmation when your items are on the way.
-          </p>
-        </div>
+      <main className="flex-1 container mx-auto px-4 py-12">
+        <div className="max-w-3xl mx-auto">
+          {/* Success Header */}
+          <div className="text-center mb-12 space-y-4">
+            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6 animate-in zoom-in duration-500">
+              <CheckCircle className="h-10 w-10 text-green-600" />
+            </div>
+            <h1 className="text-4xl font-serif font-bold tracking-tight">Order Placed Successfully!</h1>
+            <p className="text-lg text-muted-foreground max-w-lg mx-auto">
+              Thank you for your purchase. Your order has been confirmed and will be shipped shortly.
+            </p>
+            <div className="flex items-center justify-center gap-2 text-sm font-medium bg-secondary/20 py-2 px-4 rounded-full w-fit mx-auto">
+              <span>Order ID: #{order.id}</span>
+              <span className="text-muted-foreground">•</span>
+              <span className="text-muted-foreground">
+                {new Date(order.created_at).toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                })}
+              </span>
+            </div>
+          </div>
 
-        {/* Order Details */}
-        <div className="max-w-2xl mx-auto space-y-6">
-          {/* Order Summary */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <span>Order #{order.id}</span>
-                <Badge className={getStatusColor(order.status)}>
-                  {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                </Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <h4 className="font-semibold mb-2">Order Date</h4>
-                  <p className="text-gray-600">
-                    {new Date(order.created_at).toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric'
-                    })}
-                  </p>
+          <div className="grid gap-8">
+            {/* Order Details Card */}
+            <Card className="overflow-hidden border-none shadow-lg bg-secondary/5">
+              <CardHeader className="bg-secondary/10 border-b border-secondary/20 pb-4">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="font-serif text-xl">Order Details</CardTitle>
+                  <Badge className={`${getStatusColor(order.status)} px-3 py-1 capitalize`}>
+                    {order.status}
+                  </Badge>
                 </div>
-                <div>
-                  <h4 className="font-semibold mb-2">Total Amount</h4>
-                  <p className="text-xl font-bold">${order.total_amount}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Shipping Address */}
-          {order.address && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Shipping Address</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="text-gray-600">
-                  <p>{order.address.street}</p>
-                  <p>{order.address.city}, {order.address.state} {order.address.pincode}</p>
+              <CardContent className="p-6 space-y-8">
+                {/* Items List */}
+                <div className="space-y-6">
+                  {order.items.map((item) => (
+                    <div key={item.id} className="flex gap-4 items-center">
+                      <div className="w-16 h-20 bg-background rounded-sm overflow-hidden flex-shrink-0 border">
+                        {item.product_image ? (
+                          <img 
+                            src={item.product_image} 
+                            alt={item.product_name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                            <Package className="h-6 w-6" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-medium text-base truncate">{item.product_name}</h4>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Qty: {item.quantity} × ₹{item.price}
+                        </p>
+                      </div>
+                      <div className="text-right font-medium">
+                        ₹{item.total}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <Separator />
+
+                {/* Order Info Grid */}
+                <div className="grid md:grid-cols-2 gap-8">
+                  <div className="space-y-3">
+                    <h4 className="font-medium flex items-center gap-2 text-muted-foreground">
+                      <MapPin className="h-4 w-4" /> Shipping Address
+                    </h4>
+                    {order.address ? (
+                      <div className="text-sm leading-relaxed">
+                        <p>{order.address.street}</p>
+                        <p>{order.address.city}, {order.address.state} {order.address.pincode}</p>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">No address provided</p>
+                    )}
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <h4 className="font-medium flex items-center gap-2 text-muted-foreground">
+                      <Calendar className="h-4 w-4" /> Payment Summary
+                    </h4>
+                    <div className="space-y-1 text-sm">
+                      <div className="flex justify-between">
+                        <span>Subtotal</span>
+                        <span>₹{order.total_amount}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Shipping</span>
+                        <span className="text-green-600">Free</span>
+                      </div>
+                      <div className="flex justify-between font-bold text-lg pt-2 border-t mt-2">
+                        <span>Total Paid</span>
+                        <span>₹{order.total_amount}</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
-          )}
 
-          {/* Order Items */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Items Ordered</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {order.items.map((item) => (
-                  <div key={item.id} className="flex gap-3 p-3 border rounded-lg">
-                    <div className="w-16 h-16 bg-gray-200 rounded-md overflow-hidden">
-                      {item.product_image ? (
-                        <img 
-                          src={item.product_image} 
-                          alt={item.product_name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">
-                          <Package className="h-4 w-4" />
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="font-medium">{item.product_name}</h4>
-                      <p className="text-sm text-gray-600">
-                        Quantity: {item.quantity}
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        Price: ₹{item.price}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-medium">${item.total}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Action Buttons */}
-          <div className="flex flex-col gap-4">
-            {/* Invoice Download */}
-            {order.invoice_pdf && (
-              <Card className="bg-blue-50 border-blue-200">
-                <CardContent className="py-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                        <FileText className="h-5 w-5 text-blue-600" />
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-blue-900">Invoice Generated</h4>
-                        <p className="text-sm text-blue-700">Your order invoice is ready</p>
-                      </div>
-                    </div>
-                    <Button
-                      onClick={() => window.open(`http://localhost:8000${order.invoice_pdf}`, '_blank')}
-                      className="flex items-center gap-2"
-                    >
-                      <Download className="h-4 w-4" />
-                      Download Invoice
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            <div className="flex gap-4 justify-center">
+            {/* Actions */}
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Button 
                 onClick={() => navigate('/')}
                 variant="outline"
+                className="w-full sm:w-auto min-w-[200px] h-12"
               >
-                Continue Shopping
+                <ShoppingBag className="mr-2 h-4 w-4" /> Continue Shopping
               </Button>
+              
               <Button 
                 onClick={() => navigate('/orders')}
-                className="flex items-center gap-2"
+                className="w-full sm:w-auto min-w-[200px] h-12"
               >
-                View Orders
-                <ArrowRight className="h-4 w-4" />
+                View All Orders <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
+
+              {order.invoice_pdf && (
+                <Button
+                  variant="secondary"
+                  onClick={() => window.open(`http://localhost:8000${order.invoice_pdf}`, '_blank')}
+                  className="w-full sm:w-auto min-w-[200px] h-12"
+                >
+                  <Download className="mr-2 h-4 w-4" /> Download Invoice
+                </Button>
+              )}
             </div>
           </div>
         </div>
-      </div>
+      </main>
       
       <Footer />
     </div>
