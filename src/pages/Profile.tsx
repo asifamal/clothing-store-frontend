@@ -45,6 +45,13 @@ import {
   setDefaultAddress 
 } from "@/lib/api";
 
+const getImageUrl = (imagePath: string | null | undefined): string => {
+  if (!imagePath) return "";
+  if (imagePath.startsWith("http")) return imagePath;
+  const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+  return `${baseUrl.replace("/api", "")}${imagePath}`;
+};
+
 interface UserProfile {
   id: number | null;
   first_name: string;
@@ -451,7 +458,7 @@ export default function Profile() {
                           <div className="w-28 h-28 rounded-full bg-background flex items-center justify-center overflow-hidden border-4 border-background shadow-sm">
                             {profile?.avatar ? (
                               <img 
-                                src={profile.avatar} 
+                                src={getImageUrl(profile.avatar)} 
                                 alt="Profile" 
                                 className="w-full h-full object-cover" 
                               />

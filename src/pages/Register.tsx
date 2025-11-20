@@ -8,6 +8,7 @@ import { Eye, EyeOff, AlertCircle, Loader2, ArrowRight } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { registerUser, checkUsername } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
+import registerImage from "@/assets/register-men.png";
 
 const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -145,16 +146,20 @@ const Register = () => {
     <div className="min-h-screen w-full flex">
       {/* Left Side - Image */}
       <div className="hidden lg:block w-1/2 relative bg-black">
-        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1496747611176-843222e1e57c?q=80&w=2073&auto=format&fit=crop')] bg-cover bg-center opacity-60"></div>
+        <img 
+          src={registerImage} 
+          alt="Register" 
+          className="absolute inset-0 w-full h-full object-cover opacity-60"
+        />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
         <div className="absolute bottom-0 left-0 p-16 text-white">
-          <h2 className="text-4xl font-serif font-bold mb-4">Join the Community</h2>
+          <h2 className="text-4xl font-bold mb-4 tracking-tight">Join the Movement</h2>
           <p className="text-lg text-white/80 max-w-md">
-            Be the first to know about new arrivals, exclusive offers, and fashion inspiration.
+            Elevate your style. Exclusive access to premium streetwear and the latest drops.
           </p>
         </div>
         <div className="absolute top-8 left-8">
-          <Link to="/" className="text-white font-serif text-2xl font-bold tracking-wider">
+          <Link to="/" className="text-white font-bold text-2xl tracking-wider">
             NOTED.
           </Link>
         </div>
@@ -163,14 +168,14 @@ const Register = () => {
       {/* Right Side - Form */}
       <div className="w-full lg:w-1/2 flex flex-col justify-center items-center px-8 sm:px-12 lg:px-24 bg-background relative py-12 overflow-y-auto">
         <div className="absolute top-8 right-8 lg:hidden">
-           <Link to="/" className="font-serif text-2xl font-bold tracking-wider">
+           <Link to="/" className="font-bold text-2xl tracking-wider">
             NOTED.
           </Link>
         </div>
 
         <div className="w-full max-w-sm space-y-8">
           <div className="text-center lg:text-left">
-            <h1 className="text-3xl font-serif font-bold tracking-tight mb-2">Create Account</h1>
+            <h1 className="text-3xl font-bold tracking-tight mb-2">Create Account</h1>
             <p className="text-muted-foreground">
               Enter your details to create your account.
             </p>

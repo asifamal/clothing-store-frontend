@@ -12,6 +12,13 @@ import Footer from '@/components/Footer'
 import ReviewForm from '@/components/ReviewForm'
 import { createReview } from '@/lib/api'
 
+const getImageUrl = (imagePath: string | null | undefined): string => {
+  if (!imagePath) return "";
+  if (imagePath.startsWith("http")) return imagePath;
+  const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+  return `${baseUrl.replace("/api", "")}${imagePath}`;
+};
+
 interface OrderItem {
   id: number
   product_id: number
@@ -219,7 +226,7 @@ const Orders: React.FC = () => {
                             <div className="w-16 h-20 bg-secondary/20 rounded-sm overflow-hidden flex-shrink-0 border border-border/50">
                               {item.product_image ? (
                                 <img 
-                                  src={item.product_image} 
+                                  src={getImageUrl(item.product_image)} 
                                   alt={item.product_name}
                                   className="w-full h-full object-cover transition-transform group-hover:scale-105"
                                 />

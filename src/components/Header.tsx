@@ -1,6 +1,6 @@
 import { Menu, Search, User, LogOut, X, Package, ShoppingBag, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState, useEffect } from "react";
 import CartIcon from "./CartIcon";
@@ -30,6 +30,8 @@ const Header = () => {
   const [cartOpen, setCartOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
+  const location = useLocation();
+
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 20);
@@ -53,10 +55,26 @@ const Header = () => {
   };
 
   const navLinks = [
-    { name: "Home", path: "/" },
-    { name: "Shop", path: "/products" },
-    { name: "New Arrivals", path: "/products?category=new" },
+    { name: "Home", path: "/#home" },
+    { name: "Shop", path: "/#shop" },
+    { name: "New Arrivals", path: "/#new-arrivals" },
   ];
+
+  const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, path: string) => {
+    if (path.startsWith("/#")) {
+      const id = path.replace("/#", "");
+      if (location.pathname === "/") {
+        e.preventDefault();
+        const element = document.getElementById(id);
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth" });
+        }
+      }
+    } else if (path === "/" && location.pathname === "/") {
+      e.preventDefault();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
 
   return (
     <>
@@ -139,6 +157,7 @@ const Header = () => {
               <Link 
                 key={link.path}
                 to={link.path} 
+                onClick={(e) => handleNavClick(e, link.path)}
                 className="text-sm font-medium tracking-wide hover:text-muted-foreground transition-colors uppercase"
               >
                 {link.name}
@@ -148,7 +167,7 @@ const Header = () => {
 
           {/* Logo */}
           <Link to="/" className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-            <span className="text-2xl md:text-3xl font-serif font-bold tracking-tighter">
+            <span className="text-2xl md:text-3xl font-bold tracking-tighter">
               NOTED.
             </span>
           </Link>

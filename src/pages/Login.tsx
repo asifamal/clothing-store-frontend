@@ -8,6 +8,7 @@ import { Eye, EyeOff, Loader2, ArrowRight } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { loginUser } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
+import loginImage from "@/assets/login-men.png";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -77,16 +78,19 @@ const Login = () => {
     <div className="min-h-screen w-full flex">
       {/* Left Side - Image */}
       <div className="hidden lg:block w-1/2 relative bg-black">
-        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1469334031218-e382a71b716b?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center opacity-60"></div>
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+        <div 
+          className="absolute inset-0 bg-cover bg-center opacity-80"
+          style={{ backgroundImage: `url(${loginImage})` }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
         <div className="absolute bottom-0 left-0 p-16 text-white">
-          <h2 className="text-4xl font-serif font-bold mb-4">Elevate Your Style</h2>
+          <h2 className="text-4xl font-bold mb-4 tracking-tight">Uncompromising Style</h2>
           <p className="text-lg text-white/80 max-w-md">
-            Discover a curated collection of premium fashion designed for the modern individual.
+            Join the movement. Premium streetwear for the modern era.
           </p>
         </div>
         <div className="absolute top-8 left-8">
-          <Link to="/" className="text-white font-serif text-2xl font-bold tracking-wider">
+          <Link to="/" className="text-white text-2xl font-bold tracking-tighter">
             NOTED.
           </Link>
         </div>
@@ -95,14 +99,14 @@ const Login = () => {
       {/* Right Side - Form */}
       <div className="w-full lg:w-1/2 flex flex-col justify-center items-center px-8 sm:px-12 lg:px-24 bg-background relative">
         <div className="absolute top-8 right-8 lg:hidden">
-           <Link to="/" className="font-serif text-2xl font-bold tracking-wider">
+           <Link to="/" className="text-2xl font-bold tracking-tighter">
             NOTED.
           </Link>
         </div>
 
         <div className="w-full max-w-sm space-y-8">
           <div className="text-center lg:text-left">
-            <h1 className="text-3xl font-serif font-bold tracking-tight mb-2">Welcome Back</h1>
+            <h1 className="text-3xl font-bold tracking-tight mb-2">Welcome Back</h1>
             <p className="text-muted-foreground">
               Please enter your details to sign in.
             </p>

@@ -44,7 +44,7 @@ const FeaturedProducts = () => {
       <div className="container mx-auto px-6">
         <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-4">
           <div>
-            <h2 className="text-3xl md:text-4xl font-serif font-bold mb-4 tracking-tight">Latest Drops</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4 tracking-tight">Latest Drops</h2>
             <p className="text-muted-foreground max-w-md">
               Explore our newest arrivals, crafted with precision and designed for the modern wardrobe.
             </p>

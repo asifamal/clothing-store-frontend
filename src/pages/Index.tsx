@@ -1,16 +1,26 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import FeaturedProducts from "@/components/FeaturedProducts";
 import Footer from "@/components/Footer";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Loader2 } from "lucide-react";
+import { getPublicCategories } from "@/lib/api";
+
+const getImageUrl = (imagePath: string | null): string => {
+  if (!imagePath) return "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=800&q=80"; // Fallback
+  if (imagePath.startsWith("http")) return imagePath;
+  const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+  return `${baseUrl.replace("/api", "")}${imagePath}`;
+};
 
 const Index = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [categories, setCategories] = useState<any[]>([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
 
   useEffect(() => {
     if (loading) return;
@@ -22,58 +32,79 @@ const Index = () => {
     }
   }, [user, loading, navigate, location.search]);
 
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await getPublicCategories();
+        setCategories(response.data.categories);
+      } catch (error) {
+        console.error("Failed to fetch categories:", error);
+      } finally {
+        setCategoriesLoading(false);
+      }
+    };
+    fetchCategories();
+  }, []);
+
+  useEffect(() => {
+    if (!categoriesLoading && location.hash) {
+      const id = location.hash.replace("#", "");
+      const element = document.getElementById(id);
+      if (element) {
+        setTimeout(() => {
+          element.scrollIntoView({ behavior: "smooth" });
+        }, 100);
+      }
+    }
+  }, [categoriesLoading, location.hash]);
+
   return (
-    <div className="min-h-screen bg-background text-foreground selection:bg-black selection:text-white">
+    <div className="min-h-screen bg-background text-foreground selection:bg-primary selection:text-black">
       <Header />
       <main>
-        <Hero />
+        <div id="home">
+          <Hero />
+        </div>
         
         {/* Categories Section */}
-        <section className="py-20 border-b border-border/40">
+        <section id="shop" className="py-20 border-b border-border/40">
           <div className="container mx-auto px-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {[
-                { title: "New Arrivals", image: "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=800&q=80", link: "/products?category=new" },
-                { title: "Best Sellers", image: "https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?w=800&q=80", link: "/products?sort=popular" },
-                { title: "Accessories", image: "https://images.unsplash.com/photo-1521223890158-5d669a0ee79c?w=800&q=80", link: "/products?category=accessories" }
-              ].map((category, index) => (
-                <Link to={category.link} key={index} className="group relative h-[400px] overflow-hidden block">
-                  <img 
-                    src={category.image} 
-                    alt={category.title}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors" />
-                  <div className="absolute bottom-8 left-8 text-white">
-                    <h3 className="text-2xl font-serif font-bold mb-2">{category.title}</h3>
-                    <div className="flex items-center text-sm font-medium uppercase tracking-wider opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-300">
-                      Shop Now <ArrowRight className="ml-2 h-4 w-4" />
+            {categoriesLoading ? (
+              <div className="flex justify-center py-20">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {categories.map((category) => (
+                  <Link 
+                    to={`/products?category_id=${category.id}`} 
+                    key={category.id} 
+                    className="group relative h-[400px] overflow-hidden block border border-border/50 rounded-sm"
+                  >
+                    <img 
+                      src={getImageUrl(category.image)} 
+                      alt={category.name}
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 opacity-80 group-hover:opacity-100"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+                    <div className="absolute bottom-8 left-8 text-white">
+                      <h3 className="text-2xl font-bold mb-2 tracking-tight">{category.name}</h3>
+                      <div className="flex items-center text-sm font-medium uppercase tracking-wider opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-300 text-primary">
+                        Shop Now <ArrowRight className="ml-2 h-4 w-4" />
+                      </div>
                     </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
+                  </Link>
+                ))}
+              </div>
+            )}
           </div>
         </section>
 
-        <FeaturedProducts />
+        <div id="new-arrivals">
+          <FeaturedProducts />
+        </div>
 
-        {/* Philosophy Section */}
-        <section className="py-24 bg-secondary/30">
-          <div className="container mx-auto px-6 text-center">
-            <h2 className="text-3xl md:text-4xl font-serif font-bold mb-6">The Philosophy</h2>
-            <p className="max-w-2xl mx-auto text-lg text-muted-foreground leading-relaxed mb-8">
-              We believe that style should be effortless. Our collections are designed to be versatile, 
-              timeless, and durable, ensuring that you look your best in every situation. 
-              Quality is not just a promise; it's our standard.
-            </p>
-            <Link to="/about">
-              <span className="inline-flex items-center text-primary font-medium border-b border-primary pb-1 hover:opacity-70 transition-opacity">
-                Read Our Story <ArrowRight className="ml-2 h-4 w-4" />
-              </span>
-            </Link>
-          </div>
-        </section>
+
       </main>
       <Footer />
     </div>
