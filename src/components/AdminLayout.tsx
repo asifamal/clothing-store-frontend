@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -51,6 +51,14 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     logout();
     navigate("/login");
   };
+
+  // Apply admin theme to body for portaled content (dialogs, dropdowns, etc.)
+  useEffect(() => {
+    document.body.classList.add('admin-theme');
+    return () => {
+      document.body.classList.remove('admin-theme');
+    };
+  }, []);
 
   const isActive = (path: string) => location.pathname === path;
 
